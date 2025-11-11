@@ -1,6 +1,7 @@
 // Vercel Serverless Function untuk proxy API calls
 // API key disimpan di environment variable VERCEL
 
+// @ts-ignore - @vercel/node types will be available at runtime
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -41,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get API key from environment variable
+    // @ts-ignore - process.env is available in Node.js runtime
     const apiKey = provider === 'groq' 
       ? process.env.GROQ_API_KEY 
       : process.env.OPENAI_API_KEY;
