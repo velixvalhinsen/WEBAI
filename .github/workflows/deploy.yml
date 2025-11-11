@@ -32,8 +32,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create .env file
+        run: |
+          echo "VITE_PROXY_URL=${{ secrets.VITE_PROXY_URL }}" > .env.production
+        shell: bash
+
       - name: Build
         run: npm run build
+        env:
+          VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
