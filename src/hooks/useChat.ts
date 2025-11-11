@@ -145,16 +145,9 @@ export function useChat() {
         const imagePrompt = extractImagePrompt(content);
         
         // Show informative message about feature status
-        assistantContent = '**Fitur Image Generation Sedang Dalam Pengembangan**\n\n' +
-          'Maaf, fitur pembuatan gambar saat ini belum dapat digunakan karena memerlukan konfigurasi backend proxy khusus untuk mengatasi masalah CORS (Cross-Origin Resource Sharing).\n\n' +
-          '**Penjelasan Teknis:**\n' +
-          '- Hugging Face Inference API tidak mengizinkan request langsung dari browser karena kebijakan CORS\n' +
-          '- Diperlukan backend proxy (Cloudflare Worker atau Vercel) untuk meneruskan request\n' +
-          '- Endpoint `/image` perlu ditambahkan di backend proxy untuk handle image generation\n\n' +
-          '**Solusi:**\n' +
-          '1. Setup backend proxy dengan endpoint image generation\n' +
-          '2. Atau tunggu update berikutnya yang akan menambahkan fitur ini\n\n' +
-          'Terima kasih atas pengertiannya!';
+        assistantContent = '**Fitur Pembuatan Gambar Sedang Dalam Pengembangan**\n\n' +
+          'Maaf, fitur pembuatan gambar saat ini belum tersedia. Fitur ini sedang dalam tahap pengembangan dan akan segera hadir di update berikutnya.\n\n' +
+          'Terima kasih atas pengertiannya! 🙏';
 
         const imageMessage: Message = {
           id: assistantMessageId,
