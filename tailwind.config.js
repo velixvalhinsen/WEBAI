@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      spacing: {
+        '2': '0.2rem',
+      },
       colors: {
         'chat-dark': '#212121',
         'chat-darker': '#171717',
