@@ -39,8 +39,92 @@ export default {
 
     try {
       // Log request
-      console.log(`[${new Date().toISOString()}] ${request.method} ${request.url} from origin: ${origin}`);
+      const url = new URL(request.url);
+      const path = url.pathname;
+      console.log(`[${new Date().toISOString()}] ${request.method} ${path} from origin: ${origin}`);
       
+      // Handle image generation endpoint
+      if (path === '/image' || path === '/api/image') {
+        let body;
+        try {
+          body = await request.json();
+        } catch (jsonError) {
+          console.error('[Worker] Error parsing JSON:', jsonError);
+          return new Response(
+            JSON.stringify({ error: 'Invalid JSON in request body', details: jsonError.message }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        const { prompt } = body;
+        
+        if (!prompt) {
+          return new Response(
+            JSON.stringify({ error: 'Prompt is required' }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        console.log(`[Worker] Image generation request, prompt: ${prompt.substring(0, 50)}...`);
+        
+        // Call Hugging Face API
+        const hfResponse = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: prompt,
+          }),
+        });
+        
+        console.log(`[Worker] Hugging Face response status: ${hfResponse.status}`);
+        
+        if (!hfResponse.ok) {
+          if (hfResponse.status === 503) {
+            const errorData = await hfResponse.json().catch(() => ({}));
+            const estimatedTime = errorData.estimated_time || 0;
+            return new Response(
+              JSON.stringify({ 
+                error: `Model sedang loading. Silakan tunggu ${Math.ceil(estimatedTime)} detik dan coba lagi.`,
+                estimated_time: estimatedTime 
+              }),
+              {
+                status: 503,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              }
+            );
+          }
+          
+          const errorText = await hfResponse.text();
+          return new Response(
+            JSON.stringify({ error: `Hugging Face API error: ${hfResponse.status} ${hfResponse.statusText}. ${errorText}` }),
+            {
+              status: hfResponse.status,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        // Get image blob and return it
+        const imageBlob = await hfResponse.blob();
+        console.log(`[Worker] Image generated, size: ${imageBlob.size}, type: ${imageBlob.type}`);
+        
+        return new Response(imageBlob, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': imageBlob.type || 'image/png',
+          },
+        });
+      }
+      
+      // Handle chat completion endpoint (existing code)
       let body;
       try {
         body = await request.json();

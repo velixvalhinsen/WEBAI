@@ -234,55 +234,44 @@ export async function* streamChatCompletion(
 }
 
 // Hugging Face Inference API untuk image generation
-// Menggunakan CORS proxy karena Hugging Face API tidak support CORS langsung dari browser
 const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
-// Alternatif CORS proxy jika yang pertama tidak bekerja
-const CORS_PROXIES = [
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url=',
-  'https://cors-anywhere.herokuapp.com/',
-];
 
 export interface ImageGenerationResult {
   imageUrl: string;
   error?: string;
 }
 
-async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Promise<ImageGenerationResult> {
-  if (proxyIndex >= CORS_PROXIES.length) {
-    throw new Error('Semua CORS proxy gagal. Silakan coba lagi nanti.');
-  }
-
-  const proxy = CORS_PROXIES[proxyIndex];
-  let proxyUrl: string;
-  
-  if (proxy.includes('allorigins')) {
-    // allorigins.win needs the URL encoded
-    proxyUrl = `${proxy}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
-  } else if (proxy.includes('corsproxy')) {
-    proxyUrl = `${proxy}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
-  } else {
-    proxyUrl = `${proxy}${HUGGINGFACE_API_URL}`;
-  }
-  
-  console.log(`[ImageGen] Proxy URL: ${proxyUrl.substring(0, 100)}...`);
-
+export async function generateImage(prompt: string): Promise<ImageGenerationResult> {
   try {
-    console.log(`[ImageGen] Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length}: ${proxy}`);
+    console.log('[ImageGen] Generating image with prompt:', prompt);
     
-    // For allorigins.win, we need to send the request body differently
-    const requestBody = JSON.stringify({
-      inputs: prompt,
-    });
+    // Try to use backend proxy first if available
+    const useBackendProxy = PROXY_URL;
+    const isCloudflareWorker = PROXY_URL && PROXY_URL.includes('.workers.dev');
     
-    console.log(`[ImageGen] Request body:`, requestBody);
+    let apiEndpoint: string;
+    let requestBody: any;
     
-    const response = await fetch(proxyUrl, {
+    if (useBackendProxy) {
+      // Use backend proxy (Cloudflare Worker or Vercel)
+      apiEndpoint = isCloudflareWorker 
+        ? `${PROXY_URL}/image` 
+        : `${PROXY_URL}/api/image`;
+      requestBody = { prompt };
+      console.log('[ImageGen] Using backend proxy:', apiEndpoint);
+    } else {
+      // Direct Hugging Face API (will fail due to CORS, but we'll handle it)
+      apiEndpoint = HUGGINGFACE_API_URL;
+      requestBody = { inputs: prompt };
+      console.log('[ImageGen] Using direct API (may fail due to CORS)');
+    }
+    
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: requestBody,
+      body: JSON.stringify(requestBody),
     });
     
     console.log(`[ImageGen] Response received, status: ${response.status}`);
@@ -295,9 +284,9 @@ async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Pro
         throw new Error(`Model sedang loading. Silakan tunggu ${Math.ceil(estimatedTime)} detik dan coba lagi.`);
       }
       
-      // Try next proxy if this one fails
-      if (response.status >= 500 && proxyIndex < CORS_PROXIES.length - 1) {
-        return tryGenerateWithProxy(prompt, proxyIndex + 1);
+      // If using direct API and CORS error, suggest using backend proxy
+      if (!useBackendProxy && (response.status === 0 || response.status === 403)) {
+        throw new Error('CORS error. Silakan setup backend proxy untuk image generation. Fitur ini memerlukan backend proxy karena Hugging Face API tidak support CORS langsung dari browser.');
       }
       
       const errorText = await response.text();
@@ -358,20 +347,6 @@ async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Pro
     const imageUrl = URL.createObjectURL(blob);
     console.log('[ImageGen] Image generated successfully, blob type:', blob.type, 'size:', blob.size, 'URL:', imageUrl);
     return { imageUrl };
-  } catch (error) {
-    // If it's a network/CORS error, try next proxy
-    if ((error instanceof TypeError || error instanceof Error) && proxyIndex < CORS_PROXIES.length - 1) {
-      console.log(`[ImageGen] Proxy ${proxyIndex + 1} failed, trying next...`);
-      return tryGenerateWithProxy(prompt, proxyIndex + 1);
-    }
-    throw error;
-  }
-}
-
-export async function generateImage(prompt: string): Promise<ImageGenerationResult> {
-  try {
-    console.log('[ImageGen] Generating image with prompt:', prompt);
-    return await tryGenerateWithProxy(prompt);
   } catch (error) {
     console.error('[ImageGen] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Gagal generate gambar';
