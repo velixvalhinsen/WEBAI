@@ -11,7 +11,11 @@ const getApiUrl = (provider: Provider): string => {
 };
 
 const getModel = (provider: Provider): string => {
-  return provider === 'groq' ? 'llama-3.1-70b-versatile' : 'gpt-4o';
+  // Groq models:
+  // - mixtral-8x7b-32768: High-quality model with 32k context (recommended)
+  // - llama-3.1-8b-instant: Fast 8B model (alternative)
+  // Note: llama-3.1-70b-versatile and llama-3.3-70b-versatile may not be available
+  return provider === 'groq' ? 'mixtral-8x7b-32768' : 'gpt-4o';
 };
 
 export interface StreamChunk {
@@ -64,6 +68,9 @@ export async function* streamChatCompletion(
         errorMessage = 'Rate limit exceeded. Please try again later.';
       } else if (response.status === 500) {
         errorMessage = 'Server error. Please try again later.';
+      } else if (errorMessage.includes('decommissioned') || errorMessage.includes('not supported')) {
+        // If model is deprecated, suggest alternative
+        errorMessage = 'The selected model is no longer available. Please try refreshing the page or contact support.';
       }
       
       throw new Error(errorMessage);
