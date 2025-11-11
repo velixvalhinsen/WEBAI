@@ -1,3 +1,4 @@
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
@@ -74,7 +75,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           {parts.map((part, index) => {
             if (part.type === 'code') {
               return (
-                <CodeBlock key={index} language={part.language || 'text'} code={part.content} />
+                <CodeBlock key={index} language={(part as { type: 'code'; content: string; language?: string }).language || 'text'} code={part.content} />
               );
             }
             return (
@@ -89,7 +90,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                   li: ({ children }) => <li className="text-gray-300">{children}</li>,
                   strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
                   em: ({ children }) => <em className="italic">{children}</em>,
-                  code: ({ inline, children }) => {
+                  code: ({ inline, children }: { inline?: boolean; children?: React.ReactNode }) => {
                     if (inline) {
                       return (
                         <code className="px-1.5 py-0.5 bg-chat-hover text-blue-400 rounded text-sm font-mono">
