@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 // Base path: /WEBAI/ for GitHub Pages, / for Vercel
-// Vercel will override this via environment variable if needed
+// Use VITE_BASE_PATH environment variable to override (set to '/' for Vercel)
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VERCEL ? '/' : '/WEBAI/',
+  base: process.env.VITE_BASE_PATH || '/WEBAI/',
   build: {
     outDir: 'dist',
     sourcemap: false,
