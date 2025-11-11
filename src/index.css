@@ -19,6 +19,16 @@ body {
   color: #ffffff;
   overflow: hidden;
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch optimization */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a {
+  touch-action: manipulation;
 }
 
 #root {

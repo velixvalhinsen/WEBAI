@@ -40,8 +40,8 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-chat-darker rounded-lg border border-chat-border max-w-md w-full p-6 animate-slide-up">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-chat-darker rounded-lg border border-chat-border max-w-md w-full p-4 sm:p-6 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,11 +103,11 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               type="submit"
               disabled={isValidating || !apiKey.trim()}
-              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium min-h-[44px] touch-manipulation"
             >
               {isValidating ? 'Validating...' : 'Save & Continue'}
             </button>
@@ -115,7 +115,7 @@ export function APIKeyModal({ onSave, onClose }: APIKeyModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-3 bg-chat-dark hover:bg-chat-hover text-gray-300 rounded-lg transition-colors"
+                className="px-4 py-3 bg-chat-dark hover:bg-chat-hover text-gray-300 rounded-lg transition-colors min-h-[44px] touch-manipulation"
               >
                 Cancel
               </button>

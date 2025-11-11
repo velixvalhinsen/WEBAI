@@ -37,9 +37,9 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
 
   return (
     <div className="border-t border-chat-border bg-chat-darker">
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4">
-        <div className="flex items-end gap-3">
-          <div className="flex-1 relative">
+      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3">
+          <div className="flex-1 relative w-full">
             <textarea
               ref={textareaRef}
               value={input}
@@ -48,13 +48,13 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
               placeholder={disabled ? 'Please set your API key first' : 'Type your message... (Shift+Enter for new line)'}
               disabled={isLoading || disabled}
               rows={1}
-              className="w-full px-4 py-3 pr-12 bg-chat-dark border border-chat-border rounded-lg text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed max-h-32 overflow-y-auto"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 bg-chat-dark border border-chat-border rounded-lg text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed max-h-32 overflow-y-auto text-sm sm:text-base min-h-[44px]"
             />
           </div>
           <button
             type="submit"
             disabled={!input.trim() || isLoading || disabled}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+            className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 min-h-[44px] touch-manipulation text-sm sm:text-base"
           >
             {isLoading ? (
               <>
@@ -62,14 +62,15 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Sending...
+                <span className="hidden sm:inline">Sending...</span>
+                <span className="sm:hidden">Sending</span>
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                Send
+                <span>Send</span>
               </>
             )}
           </button>
