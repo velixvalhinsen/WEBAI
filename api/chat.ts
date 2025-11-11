@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers - Allow requests from any origin (for public proxy)
   const origin = req.headers.origin || '';
   
-  // Always allow the requesting origin if present, otherwise allow all
+  // Set CORS headers FIRST, before any other operations
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -23,10 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Log request for debugging
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${origin}`);
 
-  // Handle preflight OPTIONS request
+  // Handle preflight OPTIONS request - MUST return early with CORS headers
   const requestMethod: string = String(req.method || '');
   if (requestMethod.toUpperCase() === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Hanya allow POST requests untuk actual API calls
