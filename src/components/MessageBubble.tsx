@@ -80,11 +80,22 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
               src={message.imageUrl}
               alt={message.content || 'Generated image'}
               className="w-full h-auto max-w-full object-contain"
+              onLoad={() => {
+                console.log('[MessageBubble] Image loaded successfully:', message.imageUrl);
+              }}
               onError={(e) => {
-                console.error('Failed to load image:', message.imageUrl);
+                console.error('[MessageBubble] Failed to load image:', message.imageUrl);
+                console.error('[MessageBubble] Image error details:', e);
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
+          </div>
+        )}
+        
+        {/* Debug: Show if imageUrl exists but image not displayed */}
+        {message.isImageGeneration && !message.imageUrl && (
+          <div className="mb-3 p-2 bg-yellow-900/30 border border-yellow-800 rounded text-yellow-400 text-xs">
+            ⚠️ Image URL tidak tersedia
           </div>
         )}
         

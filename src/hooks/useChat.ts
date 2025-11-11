@@ -164,6 +164,7 @@ export function useChat() {
 
         // Generate image
         const result = await generateImage(imagePrompt);
+        console.log('[useChat] Image generation result:', result);
         
         if (result.error) {
           assistantContent = `Gagal membuat gambar: ${result.error}`;
@@ -176,9 +177,15 @@ export function useChat() {
           role: 'assistant',
           content: assistantContent,
           timestamp: Date.now(),
-          imageUrl: result.imageUrl,
+          imageUrl: result.imageUrl || undefined,
           isImageGeneration: true,
         };
+        
+        console.log('[useChat] Image message created:', {
+          id: imageMessage.id,
+          hasImageUrl: !!imageMessage.imageUrl,
+          imageUrl: imageMessage.imageUrl,
+        });
 
         const imageChat: Chat = {
           ...updatedChat,
