@@ -45,10 +45,10 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
   return (
     <div className="flex-1 flex flex-col bg-chat-dark overflow-hidden">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <div className="flex-1 overflow-y-auto pb-32 md:pb-0">
         {chat.messages.length === 0 ? (
-          <div className="min-h-full flex items-start justify-center px-3 sm:px-4 py-4 sm:py-6 md:py-8">
-            <div className="text-center text-gray-400 max-w-2xl w-full">
+          <div className="min-h-full flex items-center md:items-start justify-center px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+            <div className="text-center text-gray-400 max-w-2xl w-full py-4 md:py-0">
               {/* Animated Logo/Icon */}
               <div className="mb-4 sm:mb-6 flex justify-center">
                 <div className="relative">
@@ -90,7 +90,7 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
               </div>
 
               {/* About Owner */}
-              <div className="mt-4 sm:mt-6 md:mt-8 pt-4 sm:pt-6 border-t border-chat-border pb-4 sm:pb-6">
+              <div className="mt-4 sm:mt-6 md:mt-8 pt-4 sm:pt-6 border-t border-chat-border pb-8 sm:pb-6">
                 <p className="text-xs text-gray-500 mb-1.5 sm:mb-2">Tentang Owner</p>
                 <p className="text-xs sm:text-sm text-gray-400 break-words px-2">
                   Dibuat oleh <span className="text-blue-400 font-semibold">GimnasIrwandi</span> <span className="text-blue-400">@_gmns</span>
