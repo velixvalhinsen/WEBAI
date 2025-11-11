@@ -38,7 +38,11 @@ export async function* streamChatCompletion(
   try {
     // Use proxy if available and no API key provided, otherwise use direct API
     const useProxy = PROXY_URL && !apiKey;
-    const apiEndpoint = useProxy ? `${PROXY_URL}/api/chat` : getApiUrl(provider);
+    // Cloudflare Workers uses root path, Vercel uses /api/chat
+    const isCloudflareWorker = PROXY_URL && PROXY_URL.includes('.workers.dev');
+    const apiEndpoint = useProxy 
+      ? (isCloudflareWorker ? PROXY_URL : `${PROXY_URL}/api/chat`)
+      : getApiUrl(provider);
 
     // Validate endpoint
     if (useProxy && !PROXY_URL) {
