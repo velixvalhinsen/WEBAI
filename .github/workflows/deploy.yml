@@ -35,7 +35,19 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL }}
+          VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL || '' }}
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.html" ]; then
+            echo "Error: dist/index.html not found"
+            exit 1
+          fi
+          echo "Build output verified successfully"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
