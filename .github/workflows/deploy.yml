@@ -32,6 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check VITE_PROXY_URL
+        run: |
+          if [ -z "${{ secrets.VITE_PROXY_URL }}" ]; then
+            echo "VITE_PROXY_URL secret is not set, building without proxy"
+          else
+            echo "VITE_PROXY_URL is set, building with proxy"
+          fi
+
       - name: Build
         run: npm run build
         env:
