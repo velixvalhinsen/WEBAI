@@ -90,7 +90,7 @@ pre::-webkit-scrollbar-thumb {
 
 /* Custom padding overrides */
 .px-3 {
-  padding-left: 4rem;
+  /* padding-left: 4rem; */
   padding-right: 0.75rem;
 }
 
