@@ -88,6 +88,12 @@ pre::-webkit-scrollbar-thumb {
   outline-offset: 2px;
 }
 
+/* Custom padding overrides */
+.px-3 {
+  padding-left: 4rem;
+  padding-right: 0.75rem;
+}
+
 /* Prose overrides for markdown */
 .prose {
   color: #e5e7eb;

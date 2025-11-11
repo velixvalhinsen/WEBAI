@@ -8,6 +8,8 @@ export default {
     extend: {
       spacing: {
         '2': '0.2rem',
+        '2.5': '0.3rem',
+        '3': '0.75rem',
       },
       colors: {
         'chat-dark': '#212121',
