@@ -257,25 +257,35 @@ async function tryGenerateWithProxy(prompt: string, proxyIndex: number = 0): Pro
   let proxyUrl: string;
   
   if (proxy.includes('allorigins')) {
+    // allorigins.win needs the URL encoded
     proxyUrl = `${proxy}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
   } else if (proxy.includes('corsproxy')) {
     proxyUrl = `${proxy}${encodeURIComponent(HUGGINGFACE_API_URL)}`;
   } else {
     proxyUrl = `${proxy}${HUGGINGFACE_API_URL}`;
   }
+  
+  console.log(`[ImageGen] Proxy URL: ${proxyUrl.substring(0, 100)}...`);
 
   try {
     console.log(`[ImageGen] Trying proxy ${proxyIndex + 1}/${CORS_PROXIES.length}: ${proxy}`);
+    
+    // For allorigins.win, we need to send the request body differently
+    const requestBody = JSON.stringify({
+      inputs: prompt,
+    });
+    
+    console.log(`[ImageGen] Request body:`, requestBody);
     
     const response = await fetch(proxyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        inputs: prompt,
-      }),
+      body: requestBody,
     });
+    
+    console.log(`[ImageGen] Response received, status: ${response.status}`);
 
     if (!response.ok) {
       // Handle rate limiting or model loading
