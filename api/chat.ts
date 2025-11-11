@@ -4,27 +4,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers - Allow requests from GitHub Pages and localhost
+  // CORS headers - Allow requests from any origin (for public proxy)
   const origin = req.headers.origin || '';
-  const allowedOrigins = [
-    'https://velixvalhinsen.github.io',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000',
-  ];
   
-  // Check if origin matches allowed origins (support subpaths for GitHub Pages)
-  const isAllowedOrigin = !origin || allowedOrigins.some(allowed => 
-    origin === allowed || origin.startsWith(allowed + '/')
-  );
-  
-  // Set CORS headers
-  if (isAllowedOrigin && origin) {
+  // Always allow the requesting origin if present, otherwise allow all
+  if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
-    // For development or unknown origins, allow all (credentials must be false with *)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Credentials', 'false');
   }
