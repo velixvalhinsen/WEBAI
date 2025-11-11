@@ -1,4 +1,4 @@
-# GAI Chat - AI Programming Assistant
+# G Chat - AI Programming Assistant
 
 A modern, ChatGPT-like web application built with React, Vite, and TailwindCSS. This application provides an intelligent AI programming assistant powered by OpenAI's GPT-4o or Groq's Llama models, with features like streaming responses, code syntax highlighting, chat history management, and more.
 

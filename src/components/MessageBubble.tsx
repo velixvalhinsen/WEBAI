@@ -69,7 +69,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-xs sm:text-sm font-semibold text-gray-300 mb-1.5 sm:mb-2">
-          {isUser ? 'You' : 'GAI Assistant'}
+          {isUser ? 'You' : 'G Assistant'}
         </div>
         <div className="prose prose-invert prose-sm max-w-none">
           {parts.map((part, index) => {

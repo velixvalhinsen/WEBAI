@@ -105,14 +105,14 @@ function App() {
           <div className="flex items-center gap-2 sm:gap-3">
             <img
               src={`${import.meta.env.BASE_URL}Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png`}
-              alt="GAI Logo"
+              alt="G Logo"
               className="h-7 w-7 sm:h-8 sm:w-8 object-contain"
               onError={(e) => {
                 // Fallback if image doesn't load
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
-            <h1 className="text-base sm:text-lg font-semibold">GAI Chat</h1>
+            <h1 className="text-base sm:text-lg font-semibold">G Chat</h1>
           </div>
           {error && (
             <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm max-w-[calc(100vw-12rem)] sm:max-w-none">

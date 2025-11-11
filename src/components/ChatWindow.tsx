@@ -38,7 +38,7 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled }: ChatWin
         {chat.messages.length === 0 ? (
           <div className="flex items-center justify-center h-full px-4">
             <div className="text-center text-gray-400 max-w-md w-full">
-              <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">Welcome to GAI Chat</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">Welcome to G Chat</h2>
               <p className="mb-4 text-sm sm:text-base">Your AI programming assistant is ready to help you build, debug, and create amazing projects.</p>
               <div className="text-left space-y-2 text-xs sm:text-sm">
                 <p className="text-gray-500">Try asking:</p>
@@ -64,7 +64,7 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled }: ChatWin
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs sm:text-sm font-semibold text-gray-300 mb-2">GAI Assistant</div>
+                  <div className="text-xs sm:text-sm font-semibold text-gray-300 mb-2">G Assistant</div>
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
