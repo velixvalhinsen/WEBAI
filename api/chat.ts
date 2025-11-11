@@ -9,6 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const origin = req.headers.origin || '';
   
   // Set CORS headers FIRST, before any other operations
+  // Always set headers, even for OPTIONS
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -24,9 +25,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${origin}`);
 
   // Handle preflight OPTIONS request - MUST return early with CORS headers
-  const requestMethod: string = String(req.method || '');
-  if (requestMethod.toUpperCase() === 'OPTIONS') {
-    res.status(200).end();
+  const requestMethod: string = String(req.method || '').toUpperCase();
+  if (requestMethod === 'OPTIONS') {
+    // Explicitly set status and end response for OPTIONS
+    res.writeHead(200, {
+      'Access-Control-Allow-Origin': origin || '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+      'Access-Control-Allow-Credentials': origin ? 'true' : 'false',
+    });
+    res.end();
     return;
   }
 
