@@ -42,9 +42,13 @@ export default {
       const url = new URL(request.url);
       const path = url.pathname;
       console.log(`[${new Date().toISOString()}] ${request.method} ${path} from origin: ${origin}`);
+      console.log(`[Worker] Full URL: ${request.url}, Path: ${path}`);
       
-      // Handle image generation endpoint
-      if (path === '/image' || path.endsWith('/image')) {
+      // Handle image generation endpoint - check path first before parsing body
+      const isImageEndpoint = path === '/image' || path.endsWith('/image') || path.includes('/image');
+      console.log(`[Worker] Is image endpoint: ${isImageEndpoint}`);
+      
+      if (isImageEndpoint) {
         let body;
         try {
           body = await request.json();
