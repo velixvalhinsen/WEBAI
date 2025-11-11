@@ -35,6 +35,14 @@ export async function* streamChatCompletion(
   onError?: (error: Error) => void
 ): AsyncGenerator<StreamChunk, void, unknown> {
   try {
+    // Use proxy if available and no API key provided, otherwise use direct API
+    const useProxy = PROXY_URL && !apiKey;
+    const apiEndpoint = useProxy ? `${PROXY_URL}/api/chat` : getApiUrl(provider);
+
+    // Validate endpoint
+    if (useProxy && !PROXY_URL) {
+      throw new Error('Proxy URL is not configured. Please set VITE_PROXY_URL or provide an API key.');
+    }
     // Prepare messages with system prompt
     const formattedMessages = [
       { role: 'system', content: SYSTEM_PROMPT },
@@ -47,10 +55,6 @@ export async function* streamChatCompletion(
     // Limit context to last 20 messages to avoid token limits
     const limitedMessages = formattedMessages.slice(-20);
 
-    // Use proxy if available and no API key provided, otherwise use direct API
-    const useProxy = PROXY_URL && !apiKey;
-    const apiEndpoint = useProxy ? `${PROXY_URL}/api/chat` : getApiUrl(provider);
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -60,7 +64,9 @@ export async function* streamChatCompletion(
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
-    const response = await fetch(apiEndpoint, {
+    let response: Response;
+    try {
+      response = await fetch(apiEndpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -70,7 +76,26 @@ export async function* streamChatCompletion(
         temperature: 0.7,
         max_tokens: 4000,
       }),
-    });
+      });
+    } catch (fetchError) {
+      // Handle network errors (CORS, connection refused, etc.)
+      const errorMessage = fetchError instanceof Error 
+        ? fetchError.message 
+        : 'Network error';
+      
+      if (useProxy) {
+        throw new Error(
+          `Failed to connect to proxy server (${PROXY_URL}). ` +
+          `This might be a CORS issue or the proxy is down. ` +
+          `Please try using a direct API key instead.`
+        );
+      } else {
+        throw new Error(
+          `Failed to fetch from API: ${errorMessage}. ` +
+          `Please check your internet connection and try again.`
+        );
+      }
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
