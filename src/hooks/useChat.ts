@@ -167,7 +167,12 @@ export function useChat() {
         console.log('[useChat] Image generation result:', result);
         
         if (result.error) {
-          assistantContent = `Gagal membuat gambar: ${result.error}`;
+          // Check if it's a CORS/proxy error
+          if (result.error.includes('CORS') || result.error.includes('proxy')) {
+            assistantContent = `**Fitur Image Generation Sedang Dalam Pengembangan**\n\nMaaf, fitur pembuatan gambar saat ini belum dapat digunakan karena memerlukan konfigurasi backend proxy khusus untuk mengatasi masalah CORS (Cross-Origin Resource Sharing).\n\n**Penjelasan Teknis:**\n- Hugging Face Inference API tidak mengizinkan request langsung dari browser karena kebijakan CORS\n- Diperlukan backend proxy (Cloudflare Worker atau Vercel) untuk meneruskan request\n- Endpoint `/image` perlu ditambahkan di backend proxy untuk handle image generation\n\n**Solusi:**\n1. Setup backend proxy dengan endpoint image generation\n2. Atau tunggu update berikutnya yang akan menambahkan fitur ini\n\nTerima kasih atas pengertiannya! 🙏`;
+          } else {
+            assistantContent = `**Gagal membuat gambar**\n\nError: ${result.error}\n\n**Kemungkinan penyebab:**\n- Model sedang loading (coba lagi dalam beberapa detik)\n- Rate limit tercapai\n- Masalah koneksi ke server\n\nSilakan coba lagi nanti.`;
+          }
         } else {
           assistantContent = `Gambar berhasil dibuat untuk: "${imagePrompt}"`;
         }
