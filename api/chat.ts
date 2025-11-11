@@ -5,11 +5,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers - Allow requests from any origin (for public proxy)
+  // Get request method and origin FIRST
+  const method = req.method || '';
   const origin = req.headers.origin || '';
-  const requestMethod = String(req.method || '').toUpperCase();
   
-  // Set CORS headers for ALL requests
+  // Build CORS headers
   const corsHeaders: Record<string, string> = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -24,25 +24,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     corsHeaders['Access-Control-Allow-Credentials'] = 'false';
   }
 
-  // Log request for debugging
-  console.log(`[${new Date().toISOString()}] ${requestMethod} ${req.url} from origin: ${origin}`);
+  // Log request
+  console.log(`[${new Date().toISOString()}] ${method} ${req.url} from origin: ${origin}`);
 
-  // Handle preflight OPTIONS request FIRST - MUST be before any other checks
-  if (requestMethod === 'OPTIONS') {
-    console.log('[CORS] Handling OPTIONS preflight request');
+  // Handle OPTIONS preflight request - MUST be first check
+  if (method.toUpperCase() === 'OPTIONS') {
+    console.log('[CORS] OPTIONS preflight - returning 200 with CORS headers');
     res.writeHead(200, corsHeaders);
     res.end();
     return;
   }
   
-  // Set CORS headers for actual requests
+  // Set CORS headers for all other requests
   Object.entries(corsHeaders).forEach(([key, value]) => {
     res.setHeader(key, value);
   });
 
-  // Hanya allow POST requests untuk actual API calls
-  if (requestMethod !== 'POST') {
-    console.log(`[ERROR] Method ${requestMethod} not allowed, only POST is allowed`);
+  // Only allow POST for actual API calls
+  if (method.toUpperCase() !== 'POST') {
+    console.log(`[ERROR] Method ${method} not allowed`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
