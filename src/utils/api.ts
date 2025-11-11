@@ -72,6 +72,8 @@ export async function* streamChatCompletion(
       
       response = await fetch(apiEndpoint, {
       method: 'POST',
+      mode: 'cors',
+      credentials: useProxy ? 'include' : 'omit',
       headers,
       body: JSON.stringify({
         ...(useProxy ? { provider } : { model: getModel(provider) }),
