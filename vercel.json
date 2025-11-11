@@ -1,4 +1,7 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "functions": {
     "api/chat.ts": {
       "maxDuration": 60
@@ -15,6 +18,10 @@
     {
       "source": "/api/test",
       "destination": "/api/test.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
