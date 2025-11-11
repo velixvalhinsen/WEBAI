@@ -15,9 +15,10 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #171717;
+  background-color: #171717 !important;
   color: #ffffff;
   overflow: hidden;
+  min-height: 100vh;
 }
 
 #root {
