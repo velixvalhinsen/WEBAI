@@ -38,7 +38,26 @@ export default {
     }
 
     try {
-      const { messages, provider = 'groq' } = await request.json();
+      // Log request
+      console.log(`[${new Date().toISOString()}] ${request.method} ${request.url} from origin: ${origin}`);
+      
+      let body;
+      try {
+        body = await request.json();
+      } catch (jsonError) {
+        console.error('[Worker] Error parsing JSON:', jsonError);
+        return new Response(
+          JSON.stringify({ error: 'Invalid JSON in request body', details: jsonError.message }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
+      const { messages, provider = 'groq' } = body;
+      
+      console.log(`[Worker] Provider: ${provider}, Messages count: ${messages?.length || 0}`);
 
       if (!messages || !Array.isArray(messages)) {
         return new Response(
@@ -51,14 +70,32 @@ export default {
       }
 
       // Get API key from environment variable (set di Cloudflare Workers dashboard)
+      // Log all available env keys for debugging (without exposing values)
+      const envKeys = Object.keys(env || {});
+      console.log(`[Worker] Available env keys: ${envKeys.join(', ')}`);
+      console.log(`[Worker] Looking for API key: ${provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY'}`);
+      
       const apiKey = provider === 'groq' 
         ? env.GROQ_API_KEY 
         : env.OPENAI_API_KEY;
 
+      // More detailed logging
+      const apiKeyExists = !!apiKey;
+      const apiKeyLength = apiKey ? apiKey.length : 0;
+      const apiKeyPrefix = apiKey ? apiKey.substring(0, 4) + '...' : 'N/A';
+      
+      console.log(`[Worker] API key exists: ${apiKeyExists}, Provider: ${provider}`);
+      console.log(`[Worker] API key length: ${apiKeyLength}, Prefix: ${apiKeyPrefix}`);
+
       if (!apiKey) {
+        console.error(`[Worker] API key not found for provider: ${provider}`);
+        console.error(`[Worker] Expected env key: ${provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY'}`);
+        console.error(`[Worker] Available env keys: ${envKeys.length > 0 ? envKeys.join(', ') : 'NONE'}`);
+        
         return new Response(
           JSON.stringify({ 
-            error: 'API key not configured. Please set GROQ_API_KEY or OPENAI_API_KEY environment variable.' 
+            error: `API key not configured for provider: ${provider}. Please set ${provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY'} using: wrangler secret put ${provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY'}`,
+            hint: 'After setting the secret, redeploy the worker using: npm run deploy:worker'
           }),
           {
             status: 500,
@@ -77,6 +114,8 @@ export default {
         : 'gpt-4o';
 
       // Forward request to Groq/OpenAI API
+      console.log(`[Worker] Fetching from: ${apiUrl}, Model: ${model}`);
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -92,14 +131,36 @@ export default {
         }),
       });
 
+      console.log(`[Worker] API response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData = {};
+        try {
+          const text = await response.text();
+          console.error(`[Worker] API error response text:`, text);
+          errorData = JSON.parse(text);
+        } catch (parseError) {
+          console.error(`[Worker] Failed to parse error response:`, parseError);
+          errorData = { error: { message: `API Error: ${response.status} ${response.statusText}` } };
+        }
         return new Response(
           JSON.stringify({
             error: errorData.error?.message || `API Error: ${response.status} ${response.statusText}`
           }),
           {
             status: response.status,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // Check if response body exists
+      if (!response.body) {
+        console.error('[Worker] Response body is null or undefined');
+        return new Response(
+          JSON.stringify({ error: 'No response body from API' }),
+          {
+            status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           }
         );
@@ -118,15 +179,20 @@ export default {
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log('[Worker] Stream finished');
+              break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
             buffer = lines.pop() || '';
 
             for (const line of lines) {
+              if (line.trim() === '') continue; // Skip empty lines
+              
               if (line.startsWith('data: ')) {
-                const data = line.slice(6);
+                const data = line.slice(6).trim();
                 if (data === '[DONE]') {
                   await writer.write(encoder.encode('data: [DONE]\n\n'));
                   await writer.close();
@@ -135,22 +201,34 @@ export default {
 
                 try {
                   const parsed = JSON.parse(data);
-                  const delta = parsed.choices?.[0]?.delta?.content || '';
-                  if (delta) {
-                    await writer.write(
-                      encoder.encode(`data: ${JSON.stringify({ content: delta, done: false })}\n\n`)
-                    );
+                  // Forward the original Groq/OpenAI format to frontend
+                  // Frontend expects: {choices: [{delta: {content: "..."}}]}
+                  if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta) {
+                    await writer.write(encoder.encode(`data: ${data}\n\n`));
                   }
                 } catch (e) {
                   // Skip invalid JSON
+                  console.error('[Worker] Error parsing JSON:', e, 'Line:', line);
                 }
               }
             }
           }
-          await writer.write(encoder.encode('data: [DONE]\n\n'));
-          await writer.close();
+          // Ensure we close the writer properly
+          try {
+            await writer.write(encoder.encode('data: [DONE]\n\n'));
+            await writer.close();
+          } catch (closeError) {
+            console.error('[Worker] Error closing writer:', closeError);
+          }
         } catch (error) {
-          await writer.abort(error);
+          console.error('[Worker] Stream processing error:', error);
+          console.error('[Worker] Stream error name:', error.name);
+          console.error('[Worker] Stream error message:', error.message);
+          try {
+            await writer.abort(error);
+          } catch (abortError) {
+            console.error('[Worker] Error aborting writer:', abortError);
+          }
         }
       })();
 
@@ -163,11 +241,20 @@ export default {
         },
       });
     } catch (error) {
-      console.error('Proxy error:', error);
+      console.error('[Worker] Proxy error:', error);
+      console.error('[Worker] Error name:', error.name);
+      console.error('[Worker] Error message:', error.message);
+      console.error('[Worker] Error stack:', error.stack);
+      
+      // Return error response with details
+      const errorResponse = {
+        error: error.message || 'Internal server error',
+        type: error.name || 'UnknownError',
+        ...(error.stack && { stack: error.stack })
+      };
+      
       return new Response(
-        JSON.stringify({
-          error: error.message || 'Internal server error'
-        }),
+        JSON.stringify(errorResponse),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

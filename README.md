@@ -86,7 +86,9 @@ The repository includes a GitHub Actions workflow that automatically deploys to 
 
 2. **Set Environment Variable (if using proxy):**
    - Go to repository Settings → Secrets and variables → Actions
-   - Add `VITE_PROXY_URL` secret with your Vercel deployment URL
+   - Add `VITE_PROXY_URL` secret with your Cloudflare Workers URL
+   - **Quick setup:** Jalankan `.\setup-github-secret.ps1` untuk panduan interaktif
+   - **Detail lengkap:** Lihat `GITHUB_SECRET_SETUP.md` untuk panduan step-by-step
 
 ### Method 2: Manual Deployment
 

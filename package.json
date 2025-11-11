@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
     "deploy:worker": "wrangler deploy",
-    "dev:worker": "wrangler dev"
+    "dev:worker": "wrangler dev",
+    "test:worker": "node test-worker.js",
+    "logs:worker": "wrangler tail"
   },
   "dependencies": {
     "@vercel/node": "^3.0.0",

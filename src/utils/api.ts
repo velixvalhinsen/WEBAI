@@ -89,6 +89,7 @@ export async function* streamChatCompletion(
       });
       
       console.log(`[API] Response status: ${response.status} ${response.statusText}`);
+      console.log(`[API] Response headers:`, Object.fromEntries(response.headers.entries()));
     } catch (fetchError) {
       // Handle network errors (CORS, connection refused, etc.)
       const errorMessage = fetchError instanceof Error 
@@ -118,16 +119,66 @@ export async function* streamChatCompletion(
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      let errorMessage = errorData.error?.message || `API Error: ${response.status} ${response.statusText}`;
+      // Try to read error response body
+      let errorData: any = {};
+      const contentType = response.headers.get('content-type');
       
-      // Provide more helpful error messages
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const text = await response.text();
+          console.error('[API] Error response text:', text);
+          errorData = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[API] Failed to parse error response:', parseError);
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+      } else {
+        try {
+          const text = await response.text();
+          console.error('[API] Error response text (non-JSON):', text);
+          errorData = { error: text || `HTTP ${response.status}: ${response.statusText}` };
+        } catch (readError) {
+          console.error('[API] Failed to read error response:', readError);
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+      }
+      
+      // Get error message from response - check multiple possible fields
+      let errorMessage = errorData.error || errorData.error?.message || errorData.message || `API Error: ${response.status} ${response.statusText}`;
+      
+      // If error is an object, try to get message from it
+      if (typeof errorMessage === 'object' && errorMessage.message) {
+        errorMessage = errorMessage.message;
+      }
+      
+      // Ensure errorMessage is a string
+      if (typeof errorMessage !== 'string') {
+        errorMessage = String(errorMessage);
+      }
+      
+      // Log full error data for debugging
+      console.error('[API] Error response data:', errorData);
+      console.error('[API] Extracted error message:', errorMessage);
+      
+      // Provide more helpful error messages, but preserve detailed messages from server
       if (response.status === 401) {
-        errorMessage = 'Invalid API key. Please check your API key and try again. You can reset it from the sidebar.';
+        if (!errorMessage.includes('API key')) {
+          errorMessage = 'Invalid API key. Please check your API key and try again. You can reset it from the sidebar.';
+        }
       } else if (response.status === 429) {
-        errorMessage = 'Rate limit exceeded. Please try again later.';
+        if (!errorMessage.includes('rate limit') && !errorMessage.includes('Rate limit')) {
+          errorMessage = 'Rate limit exceeded. Please try again later.';
+        }
       } else if (response.status === 500) {
-        errorMessage = 'Server error. Please try again later.';
+        // For 500 errors, show the actual error message from server if available
+        // Only use generic message if no specific error was provided
+        if (!errorMessage || errorMessage === `API Error: ${response.status} ${response.statusText}`) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+        // If error message contains API key info, show it directly
+        if (errorMessage.includes('API key not configured') || errorMessage.includes('API key not found')) {
+          // Keep the detailed message from server
+        }
       } else if (errorMessage.includes('decommissioned') || errorMessage.includes('not supported')) {
         // If model is deprecated, suggest alternative
         errorMessage = 'The selected model is no longer available. Please try refreshing the page or contact support.';
