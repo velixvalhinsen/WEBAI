@@ -47,41 +47,41 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
       {/* Messages */}
       <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
         {chat.messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full px-4 py-8">
+          <div className="min-h-full flex items-start justify-center px-3 sm:px-4 py-4 sm:py-6 md:py-8">
             <div className="text-center text-gray-400 max-w-2xl w-full">
               {/* Animated Logo/Icon */}
-              <div className="mb-6 flex justify-center">
+              <div className="mb-4 sm:mb-6 flex justify-center">
                 <div className="relative">
                   <div className="absolute inset-0 bg-blue-600 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                  <div className="relative bg-gradient-to-br from-blue-600 to-purple-600 rounded-full p-6 animate-pulse">
-                    <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="relative bg-gradient-to-br from-blue-600 to-purple-600 rounded-full p-4 sm:p-6 animate-pulse">
+                    <svg className="w-12 h-12 sm:w-16 sm:h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
                 </div>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-3">Welcome to G Chat</h2>
-              <p className="mb-6 text-sm sm:text-base text-gray-300">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-white mb-2 sm:mb-3">Welcome to G Chat</h2>
+              <p className="mb-4 sm:mb-6 text-xs sm:text-sm md:text-base text-gray-300 px-2">
                 Your AI programming assistant is ready to help you build, debug, and create amazing projects.
               </p>
 
               {/* Chat Templates */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {CHAT_TEMPLATES.map((template, index) => (
                   <button
                     key={index}
                     onClick={() => !disabled && !isLoading && onSendMessage(template.prompt)}
                     disabled={disabled || isLoading}
-                    className="p-4 bg-chat-darker border border-chat-border rounded-lg hover:bg-chat-hover hover:border-blue-600/50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 sm:p-4 bg-chat-darker border border-chat-border rounded-lg hover:bg-chat-hover hover:border-blue-600/50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center group-hover:bg-blue-600/30 transition-colors">
-                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600/20 rounded-lg flex items-center justify-center group-hover:bg-blue-600/30 transition-colors">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+                      <span className="text-xs sm:text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
                         {template.label}
                       </span>
                     </div>
@@ -90,9 +90,9 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCod
               </div>
 
               {/* About Owner */}
-              <div className="mt-8 pt-6 border-t border-chat-border">
-                <p className="text-xs text-gray-500 mb-2">Tentang Owner</p>
-                <p className="text-sm text-gray-400">
+              <div className="mt-4 sm:mt-6 md:mt-8 pt-4 sm:pt-6 border-t border-chat-border pb-4 sm:pb-6">
+                <p className="text-xs text-gray-500 mb-1.5 sm:mb-2">Tentang Owner</p>
+                <p className="text-xs sm:text-sm text-gray-400 break-words px-2">
                   Dibuat oleh <span className="text-blue-400 font-semibold">GimnasIrwandi</span> <span className="text-blue-400">@_gmns</span>
                 </p>
               </div>
