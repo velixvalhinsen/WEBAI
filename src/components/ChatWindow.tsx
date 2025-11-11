@@ -16,6 +16,7 @@ const CHAT_TEMPLATES = [
   { label: 'Debug JavaScript error', prompt: 'Help me debug this JavaScript error' },
   { label: 'Create REST API', prompt: 'Create a REST API with Node.js' },
   { label: 'Explain React hooks', prompt: 'Explain how React hooks work' },
+  { label: 'Buat Gambar', prompt: '/gambar kucing lucu sedang bermain' },
   { label: 'Tentang Owner', prompt: 'Tentang Owner' },
 ];
 

@@ -72,6 +72,22 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
         <div className="text-xs sm:text-sm font-semibold text-gray-300 mb-1.5 sm:mb-2">
           {isUser ? 'You' : 'G Assistant'}
         </div>
+        
+        {/* Display generated image if available */}
+        {message.imageUrl && (
+          <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">
+            <img
+              src={message.imageUrl}
+              alt={message.content || 'Generated image'}
+              className="w-full h-auto max-w-full object-contain"
+              onError={(e) => {
+                console.error('Failed to load image:', message.imageUrl);
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        
         <div className="prose prose-invert prose-sm max-w-none">
           {parts.map((part, index) => {
             if (part.type === 'code') {

@@ -233,6 +233,97 @@ export async function* streamChatCompletion(
   }
 }
 
+// Hugging Face Inference API untuk image generation
+const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
+
+export interface ImageGenerationResult {
+  imageUrl: string;
+  error?: string;
+}
+
+export async function generateImage(prompt: string): Promise<ImageGenerationResult> {
+  try {
+    console.log('[ImageGen] Generating image with prompt:', prompt);
+    
+    const response = await fetch(HUGGINGFACE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+      }),
+    });
+
+    if (!response.ok) {
+      // Handle rate limiting or model loading
+      if (response.status === 503) {
+        const errorData = await response.json().catch(() => ({}));
+        const estimatedTime = errorData.estimated_time || 0;
+        throw new Error(`Model sedang loading. Silakan tunggu ${Math.ceil(estimatedTime)} detik dan coba lagi.`);
+      }
+      
+      const errorText = await response.text();
+      throw new Error(`Gagal generate gambar: ${response.status} ${response.statusText}. ${errorText}`);
+    }
+
+    // Hugging Face returns image as blob
+    const blob = await response.blob();
+    const imageUrl = URL.createObjectURL(blob);
+    
+    console.log('[ImageGen] Image generated successfully');
+    return { imageUrl };
+  } catch (error) {
+    console.error('[ImageGen] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Gagal generate gambar';
+    return { imageUrl: '', error: errorMessage };
+  }
+}
+
+// Helper function to detect if message is requesting image generation
+export function isImageGenerationRequest(message: string): boolean {
+  const normalized = message.toLowerCase().trim();
+  
+  // Command-based triggers (must start with command)
+  const commands = ['/image', '/generate', '/gambar', '/img'];
+  if (commands.some(cmd => normalized.startsWith(cmd))) {
+    return true;
+  }
+  
+  // Phrase-based triggers (must start with phrase)
+  const phrases = [
+    'buat gambar',
+    'generate image',
+    'create image',
+    'buatkan gambar',
+    'gambar',
+  ];
+  if (phrases.some(phrase => normalized.startsWith(phrase))) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Extract prompt from image generation request
+export function extractImagePrompt(message: string): string {
+  const normalized = message.trim();
+  
+  // Remove command prefixes
+  const prefixes = ['/image', '/generate', '/gambar', 'buat gambar', 'generate image', 'create image'];
+  let prompt = normalized;
+  
+  for (const prefix of prefixes) {
+    if (normalized.toLowerCase().startsWith(prefix.toLowerCase())) {
+      prompt = normalized.slice(prefix.length).trim();
+      break;
+    }
+  }
+  
+  // If prompt is empty, use the original message
+  return prompt || normalized;
+}
+
 export async function validateApiKey(apiKey: string, provider: Provider = 'groq'): Promise<{ valid: boolean; error?: string }> {
   try {
     // Use a simpler model for validation

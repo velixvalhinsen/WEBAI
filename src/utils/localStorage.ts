@@ -11,6 +11,8 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  imageUrl?: string; // URL untuk gambar yang di-generate
+  isImageGeneration?: boolean; // Flag untuk menandai message sebagai image generation
 }
 
 const CHATS_KEY = 'gai_chats';

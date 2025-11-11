@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Chat, Message, storage } from '../utils/localStorage';
-import { streamChatCompletion, Provider } from '../utils/api';
+import { streamChatCompletion, Provider, generateImage, isImageGenerationRequest, extractImagePrompt } from '../utils/api';
 
 export function useChat() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -140,8 +140,57 @@ export function useChat() {
     let assistantContent = '';
 
     try {
-      // Check if asking about owner - provide direct response
-      if (isOwnerQuestion(content)) {
+      // Check if requesting image generation
+      if (isImageGenerationRequest(content)) {
+        const imagePrompt = extractImagePrompt(content);
+        
+        // Show loading message
+        const loadingMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: 'Sedang membuat gambar...',
+          timestamp: Date.now(),
+          isImageGeneration: true,
+        };
+
+        const loadingChat: Chat = {
+          ...updatedChat,
+          messages: [...updatedMessages, loadingMessage],
+          updatedAt: Date.now(),
+        };
+
+        setCurrentChat(loadingChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? loadingChat : c));
+
+        // Generate image
+        const result = await generateImage(imagePrompt);
+        
+        if (result.error) {
+          assistantContent = `Gagal membuat gambar: ${result.error}`;
+        } else {
+          assistantContent = `Gambar berhasil dibuat untuk: "${imagePrompt}"`;
+        }
+
+        const imageMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: assistantContent,
+          timestamp: Date.now(),
+          imageUrl: result.imageUrl,
+          isImageGeneration: true,
+        };
+
+        const imageChat: Chat = {
+          ...updatedChat,
+          messages: [...updatedMessages, imageMessage],
+          updatedAt: Date.now(),
+        };
+
+        setCurrentChat(imageChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? imageChat : c));
+        storage.saveChat(imageChat);
+      } else if (isOwnerQuestion(content)) {
+        // Check if asking about owner - provide direct response
         assistantContent = 'G Chat dibuat oleh **GimnasIrwandi**. GimnasIrwandi adalah pembuat dan developer dari aplikasi AI Chat ini.';
         
         // Update assistant message immediately
