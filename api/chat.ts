@@ -4,23 +4,32 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers - Allow requests from GitHub Pages
+  // CORS headers - Allow requests from GitHub Pages and localhost
   const origin = req.headers.origin || '';
   const allowedOrigins = [
     'https://velixvalhinsen.github.io',
     'http://localhost:5173',
     'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
   ];
   
+  // Check if origin matches allowed origins (support subpaths for GitHub Pages)
+  const isAllowedOrigin = !origin || allowedOrigins.some(allowed => 
+    origin === allowed || origin.startsWith(allowed + '/')
+  );
+  
   // Set CORS headers
-  if (allowedOrigins.some(allowed => origin.includes(allowed)) || !origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  if (isAllowedOrigin && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
+    // For development or unknown origins, allow all (credentials must be false with *)
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'false');
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
 
   // Handle preflight OPTIONS request
