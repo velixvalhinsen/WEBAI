@@ -6,9 +6,10 @@ import { Message } from '../utils/localStorage';
 
 interface MessageBubbleProps {
   message: Message;
+  onCopyCode?: () => void;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   // Extract code blocks from markdown
@@ -75,7 +76,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           {parts.map((part, index) => {
             if (part.type === 'code') {
               return (
-                <CodeBlock key={index} language={(part as { type: 'code'; content: string; language?: string }).language || 'text'} code={part.content} />
+                <CodeBlock key={index} language={(part as { type: 'code'; content: string; language?: string }).language || 'text'} code={part.content} onCopy={onCopyCode} />
               );
             }
             return (

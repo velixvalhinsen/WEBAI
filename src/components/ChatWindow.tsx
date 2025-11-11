@@ -8,9 +8,18 @@ interface ChatWindowProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  onCopyCode?: () => void;
 }
 
-export function ChatWindow({ chat, onSendMessage, isLoading, disabled }: ChatWindowProps) {
+const CHAT_TEMPLATES = [
+  { label: 'Build a React todo app', prompt: 'Build a React todo app with TypeScript' },
+  { label: 'Debug JavaScript error', prompt: 'Help me debug this JavaScript error' },
+  { label: 'Create REST API', prompt: 'Create a REST API with Node.js' },
+  { label: 'Explain React hooks', prompt: 'Explain how React hooks work' },
+  { label: 'Tentang Owner', prompt: 'Tentang Owner' },
+];
+
+export function ChatWindow({ chat, onSendMessage, isLoading, disabled, onCopyCode }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,11 +29,13 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled }: ChatWin
   if (!chat) {
     return (
       <div className="flex-1 flex items-center justify-center bg-chat-dark">
-        <div className="text-center text-gray-400">
-          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <p className="text-lg mb-2">Start a new conversation</p>
+        <div className="text-center text-gray-400 px-4">
+          <div className="mb-6 animate-bounce">
+            <svg className="w-20 h-20 mx-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <p className="text-lg mb-2 font-semibold text-white">Start a new conversation</p>
           <p className="text-sm">Click "New Chat" to begin</p>
         </div>
       </div>
@@ -36,25 +47,61 @@ export function ChatWindow({ chat, onSendMessage, isLoading, disabled }: ChatWin
       {/* Messages */}
       <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
         {chat.messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full px-4">
-            <div className="text-center text-gray-400 max-w-md w-full">
-              <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">Welcome to G Chat</h2>
-              <p className="mb-4 text-sm sm:text-base">Your AI programming assistant is ready to help you build, debug, and create amazing projects.</p>
-              <div className="text-left space-y-2 text-xs sm:text-sm">
-                <p className="text-gray-500">Try asking:</p>
-                <ul className="list-disc list-inside space-y-1 text-gray-400">
-                  <li>"Build a React todo app with TypeScript"</li>
-                  <li>"Help me debug this JavaScript error"</li>
-                  <li>"Create a REST API with Node.js"</li>
-                  <li>"Explain how React hooks work"</li>
-                </ul>
+          <div className="flex items-center justify-center h-full px-4 py-8">
+            <div className="text-center text-gray-400 max-w-2xl w-full">
+              {/* Animated Logo/Icon */}
+              <div className="mb-6 flex justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-blue-600 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                  <div className="relative bg-gradient-to-br from-blue-600 to-purple-600 rounded-full p-6 animate-pulse">
+                    <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-3">Welcome to G Chat</h2>
+              <p className="mb-6 text-sm sm:text-base text-gray-300">
+                Your AI programming assistant is ready to help you build, debug, and create amazing projects.
+              </p>
+
+              {/* Chat Templates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                {CHAT_TEMPLATES.map((template, index) => (
+                  <button
+                    key={index}
+                    onClick={() => !disabled && !isLoading && onSendMessage(template.prompt)}
+                    disabled={disabled || isLoading}
+                    className="p-4 bg-chat-darker border border-chat-border rounded-lg hover:bg-chat-hover hover:border-blue-600/50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center group-hover:bg-blue-600/30 transition-colors">
+                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+                        {template.label}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* About Owner */}
+              <div className="mt-8 pt-6 border-t border-chat-border">
+                <p className="text-xs text-gray-500 mb-2">Tentang Owner</p>
+                <p className="text-sm text-gray-400">
+                  Dibuat dengan ❤️ oleh <span className="text-blue-400 font-semibold">GimnasIrwandi</span>
+                </p>
               </div>
             </div>
           </div>
         ) : (
           <div className="max-w-4xl mx-auto w-full px-2 sm:px-4">
             {chat.messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+              <MessageBubble key={message.id} message={message} onCopyCode={onCopyCode} />
             ))}
             {isLoading && (
               <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 md:p-6 bg-chat-dark animate-fade-in">

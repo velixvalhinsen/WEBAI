@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { APIKeyModal } from './components/APIKeyModal';
+import { ToastContainer } from './components/ToastContainer';
 import { useChat } from './hooks/useChat';
+import { useToast } from './hooks/useToast';
 import { storage } from './utils/localStorage';
 import { Provider } from './utils/api';
 
@@ -11,6 +13,7 @@ function App() {
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { toasts, removeToast, success, error: showErrorToast } = useToast();
 
   const {
     chats,
@@ -46,12 +49,20 @@ function App() {
     }
   }, []);
 
+  // Show toast when error occurs
+  useEffect(() => {
+    if (error) {
+      showErrorToast(error);
+    }
+  }, [error, showErrorToast]);
+
   const handleSaveApiKey = (key: string, selectedProvider: Provider) => {
     storage.setApiKey(key);
     storage.setProvider(selectedProvider);
     setApiKey(key);
     setProvider(selectedProvider);
     setShowApiKeyModal(false);
+    success('API key saved successfully!');
   };
 
   const handleSendMessage = (message: string) => {
@@ -59,7 +70,13 @@ function App() {
     const proxyUrl = import.meta.env.VITE_PROXY_URL;
     if (apiKey || proxyUrl) {
       sendMessage(message, apiKey, provider);
+    } else {
+      showErrorToast('Please set your API key first');
     }
+  };
+
+  const handleCopyCode = () => {
+    success('Code copied to clipboard!');
   };
 
   return (
@@ -130,6 +147,7 @@ function App() {
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
           disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
+          onCopyCode={handleCopyCode}
         />
       </div>
 
@@ -140,6 +158,9 @@ function App() {
           onClose={apiKey ? () => setShowApiKeyModal(false) : undefined}
         />
       )}
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }

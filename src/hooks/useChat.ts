@@ -76,6 +76,21 @@ export function useChat() {
     storage.deleteAllChats();
   }, []);
 
+  // Helper function to check if message is asking about owner
+  const isOwnerQuestion = (message: string): boolean => {
+    const normalized = message.toLowerCase().trim();
+    const ownerPatterns = [
+      /tentang\s+owner/i,
+      /siapa\s+pembuat/i,
+      /who\s+made\s+this/i,
+      /creator/i,
+      /developer/i,
+      /pembuat\s+ai/i,
+      /pembuat\s+aplikasi/i,
+    ];
+    return ownerPatterns.some(pattern => pattern.test(normalized));
+  };
+
   // Helper function to check if message is asking about Gimnas
   const isGimnasQuestion = (message: string): boolean => {
     const normalized = message.toLowerCase().trim();
@@ -125,8 +140,27 @@ export function useChat() {
     let assistantContent = '';
 
     try {
-      // Check if asking about Gimnas - provide direct response
-      if (isGimnasQuestion(content)) {
+      // Check if asking about owner - provide direct response
+      if (isOwnerQuestion(content)) {
+        assistantContent = 'G Chat dibuat oleh **GimnasIrwandi**. GimnasIrwandi adalah pembuat dan developer dari aplikasi AI Chat ini.';
+        
+        // Update assistant message immediately
+        const directMessages = [...updatedMessages, {
+          id: assistantMessageId,
+          role: 'assistant' as const,
+          content: assistantContent,
+          timestamp: Date.now(),
+        }];
+
+        const directChat: Chat = {
+          ...updatedChat,
+          messages: directMessages,
+          updatedAt: Date.now(),
+        };
+
+        setCurrentChat(directChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? directChat : c));
+      } else if (isGimnasQuestion(content)) {
         assistantContent = 'Gimnas adalah pembuat AI ini';
         
         // Update assistant message immediately
