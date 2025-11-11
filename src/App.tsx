@@ -113,10 +113,18 @@ function App() {
           </div>
           {error && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {error}
+              <span className="flex-1">{error}</span>
+              {error.includes('Invalid API key') && (
+                <button
+                  onClick={handleResetApiKey}
+                  className="ml-2 px-2 py-1 text-xs bg-red-800 hover:bg-red-700 rounded transition-colors"
+                >
+                  Reset Key
+                </button>
+              )}
             </div>
           )}
         </header>

@@ -55,10 +55,18 @@ export async function* streamChatCompletion(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error?.message || 
-        `API Error: ${response.status} ${response.statusText}`
-      );
+      let errorMessage = errorData.error?.message || `API Error: ${response.status} ${response.statusText}`;
+      
+      // Provide more helpful error messages
+      if (response.status === 401) {
+        errorMessage = 'Invalid API key. Please check your API key and try again. You can reset it from the sidebar.';
+      } else if (response.status === 429) {
+        errorMessage = 'Rate limit exceeded. Please try again later.';
+      } else if (response.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const reader = response.body?.getReader();
