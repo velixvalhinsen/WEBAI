@@ -8,7 +8,8 @@
     "skipLibCheck": true,
     "strict": false,
     "noEmit": true,
-    "types": ["@vercel/node", "node"]
+    "types": ["@vercel/node", "node"],
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["*.ts"],
   "exclude": ["node_modules"]
