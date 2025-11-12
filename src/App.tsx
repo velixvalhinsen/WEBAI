@@ -136,27 +136,30 @@ function App() {
             />
             <h1 className="text-base sm:text-lg font-semibold">G Chat</h1>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
             {error && (
-              <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm">
+              <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm flex-shrink">
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="flex-1 truncate">{error}</span>
               </div>
             )}
-            {/* File Manager Button - Always visible */}
+            {/* File Manager Button - ALWAYS VISIBLE */}
             <button
-              onClick={() => {
-                console.log('File Manager button clicked');
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('File Manager button clicked!');
                 setShowFileManager(true);
               }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg border-2 border-blue-500 transition-all flex items-center gap-2 text-white font-medium shadow-lg z-10"
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg border-2 border-blue-400 transition-all flex items-center gap-2 text-white font-semibold shadow-lg flex-shrink-0"
               style={{ 
-                minWidth: '140px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                display: 'flex !important',
+                visibility: 'visible !important',
+                opacity: '1 !important',
+                position: 'relative',
+                zIndex: 1000
               }}
               title="File Manager - Upload ZIP and edit code"
               aria-label="Open File Manager"
@@ -164,7 +167,7 @@ function App() {
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
-              <span className="text-sm font-semibold whitespace-nowrap">File Manager</span>
+              <span className="text-sm font-bold whitespace-nowrap">Files</span>
             </button>
             {/* User Menu */}
             <UserMenu />
