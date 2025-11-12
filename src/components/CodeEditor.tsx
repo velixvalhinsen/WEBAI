@@ -14,69 +14,73 @@ const loadMonaco = async (): Promise<any> => {
   if (monacoEditor) return monacoEditor;
   if (monacoLoader) return monacoLoader;
   
-  console.log('Loading Monaco Editor...');
+  console.log('🔄 Loading Monaco Editor (this may take 30-60 seconds on slow connections)...');
   
   monacoLoader = Promise.race([
     import('monaco-editor').then((module) => {
-      console.log('Monaco Editor module loaded:', Object.keys(module));
-      
-      // With vite-plugin-monaco-editor, Monaco is typically available as:
-      // - module.default (if default export)
-      // - module.editor (named export)
-      // - window.monaco (global)
+      console.log('📦 Monaco Editor module loaded:', Object.keys(module));
       
       let monaco: any = null;
       
-      // Check window.monaco first (vite-plugin-monaco-editor sets this)
+      // Method 1: Check window.monaco (set by some loaders)
       const win = window as any;
       if (win.monaco && win.monaco.editor) {
-        console.log('Found Monaco on window.monaco');
+        console.log('✅ Found Monaco on window.monaco');
         monaco = win.monaco;
       }
-      // Check module.editor
+      // Method 2: Check module.editor (named export)
       else if (module.editor) {
-        console.log('Found Monaco in module.editor');
+        console.log('✅ Found Monaco in module.editor');
         monaco = { editor: module.editor };
       }
-      // Check default export
+      // Method 3: Check default export
       else if (module.default) {
         const defaultExport = module.default;
-        if (defaultExport.editor) {
-          console.log('Found Monaco in module.default.editor');
+        if (defaultExport && defaultExport.editor) {
+          console.log('✅ Found Monaco in module.default.editor');
           monaco = defaultExport;
-        } else if (typeof defaultExport === 'object') {
+        } else if (typeof defaultExport === 'object' && defaultExport !== null) {
           // Try to access editor property
           if ('editor' in defaultExport) {
-            console.log('Found Monaco in module.default[editor]');
+            console.log('✅ Found Monaco in module.default[editor]');
             monaco = defaultExport;
           }
         }
       }
-      // Check for monaco property
+      // Method 4: Check for monaco property
       else if ((module as any).monaco) {
-        console.log('Found Monaco in module.monaco');
+        console.log('✅ Found Monaco in module.monaco');
         monaco = (module as any).monaco;
+      }
+      // Method 5: Try accessing directly from module
+      else if (typeof (module as any).create === 'function') {
+        console.log('✅ Found Monaco create function directly');
+        monaco = { editor: module };
       }
       
       if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
-        console.log('✅ Monaco Editor API found');
+        console.log('✅ Monaco Editor API found and ready');
         return monaco;
       }
       
+      // Log all available keys for debugging
+      console.error('❌ Monaco Editor API not found. Available keys:', Object.keys(module));
+      console.error('Module structure:', module);
       throw new Error('Monaco Editor API not found. Available keys: ' + Object.keys(module).join(', '));
     }),
     new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Monaco Editor load timeout after 30s')), 30000)
+      setTimeout(() => reject(new Error('Monaco Editor load timeout after 60s')), 60000)
     )
   ]).then((monaco: any) => {
     if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
       monacoEditor = monaco;
-      console.log('✅ Monaco Editor ready');
+      console.log('✅ Monaco Editor ready to use');
       return monaco;
     }
     throw new Error('Monaco Editor not properly loaded - editor.create is not a function');
   }).catch((error) => {
     console.error('❌ Monaco Editor load error:', error);
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     monacoLoader = null; // Reset loader on error
     throw error;
@@ -134,13 +138,13 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
 
     setIsLoading(true);
 
-    // Set timeout to show error if loading takes too long
+    // Set timeout to show error if loading takes too long (increased to 60s for large bundle)
     timeoutId = setTimeout(() => {
       if (isMounted) {
-        console.error('Monaco Editor loading timeout - check network or bundle size');
-        setIsLoading(false);
+        console.warn('⚠️ Monaco Editor still loading after 60s - this is normal for first load on slow connections');
+        // Don't set loading to false yet, let it continue
       }
-    }, 15000);
+    }, 60000);
 
     loadMonaco()
       .then((monaco) => {
@@ -256,16 +260,16 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
     }
   }, [value, isLoading]);
 
-  // Check for loading timeout
+  // Check for loading timeout (increased to 90s for large bundle)
   useEffect(() => {
     if (isLoading) {
       const timeout = setTimeout(() => {
         if (isLoading && !editorInstanceRef.current) {
-          console.warn('Monaco Editor loading timeout - switching to fallback');
+          console.warn('⚠️ Monaco Editor loading timeout after 90s - switching to fallback');
           setLoadError('Monaco Editor is taking too long to load. Using fallback editor.');
           setIsLoading(false);
         }
-      }, 10000); // 10 second timeout
+      }, 90000); // 90 second timeout for large bundle
       return () => clearTimeout(timeout);
     }
   }, [isLoading]);
