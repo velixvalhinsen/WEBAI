@@ -20,41 +20,50 @@ const loadMonaco = async (): Promise<any> => {
     import('monaco-editor').then((module) => {
       console.log('Monaco Editor module loaded:', Object.keys(module));
       
-      // Try different ways to access Monaco Editor
+      // With vite-plugin-monaco-editor, Monaco is typically available as:
+      // - module.default (if default export)
+      // - module.editor (named export)
+      // - window.monaco (global)
+      
       let monaco: any = null;
       
-      // Method 1: Direct access
-      if (module.editor) {
+      // Check window.monaco first (vite-plugin-monaco-editor sets this)
+      const win = window as any;
+      if (win.monaco && win.monaco.editor) {
+        console.log('Found Monaco on window.monaco');
+        monaco = win.monaco;
+      }
+      // Check module.editor
+      else if (module.editor) {
+        console.log('Found Monaco in module.editor');
         monaco = { editor: module.editor };
       }
-      // Method 2: Default export
+      // Check default export
       else if (module.default) {
         const defaultExport = module.default;
         if (defaultExport.editor) {
+          console.log('Found Monaco in module.default.editor');
           monaco = defaultExport;
-        } else if (typeof defaultExport === 'object' && 'editor' in defaultExport) {
-          monaco = defaultExport;
+        } else if (typeof defaultExport === 'object') {
+          // Try to access editor property
+          if ('editor' in defaultExport) {
+            console.log('Found Monaco in module.default[editor]');
+            monaco = defaultExport;
+          }
         }
       }
-      // Method 3: Named exports
+      // Check for monaco property
       else if ((module as any).monaco) {
+        console.log('Found Monaco in module.monaco');
         monaco = (module as any).monaco;
-      }
-      // Method 4: Try accessing directly
-      else {
-        // Monaco might be on window object if loaded via script tag
-        const win = window as any;
-        if (win.monaco && win.monaco.editor) {
-          monaco = win.monaco;
-        }
       }
       
       if (monaco && monaco.editor && typeof monaco.editor.create === 'function') {
-        console.log('Monaco Editor API found');
+        console.log('✅ Monaco Editor API found');
         return monaco;
       }
       
-      throw new Error('Monaco Editor API not found in module. Available keys: ' + Object.keys(module).join(', '));
+      throw new Error('Monaco Editor API not found. Available keys: ' + Object.keys(module).join(', '));
     }),
     new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Monaco Editor load timeout after 30s')), 30000)
