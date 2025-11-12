@@ -40,13 +40,17 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
     try {
       // Email validation
       if (!email.trim()) {
-        showError('Email is required');
+        const msg = 'Email wajib diisi';
+        showError(msg);
+        alert(msg);
         setIsLoading(false);
         return;
       }
 
       if (!isValidEmail(email)) {
-        showError('Please enter a valid email address');
+        const msg = 'Format email tidak valid';
+        showError(msg);
+        alert(msg);
         setIsLoading(false);
         return;
       }
@@ -54,32 +58,40 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       if (mode === 'register') {
         // Password validation
         if (!password) {
-          showError('Password is required');
+          const msg = 'Password wajib diisi';
+          showError(msg);
+          alert(msg);
           setIsLoading(false);
           return;
         }
 
         if (!isStrongPassword(password)) {
-          showError('Password must be at least 6 characters');
+          const msg = 'Password minimal 6 karakter';
+          showError(msg);
+          alert(msg);
           setIsLoading(false);
           return;
         }
 
         // Confirm password validation
         if (!confirmPassword) {
-          showError('Please confirm your password');
+          const msg = 'Konfirmasi password wajib diisi';
+          showError(msg);
+          alert(msg);
           setIsLoading(false);
           return;
         }
 
         if (password !== confirmPassword) {
-          showError('Passwords do not match');
+          const msg = 'Password tidak sama. Silakan periksa kembali.';
+          showError(msg);
+          alert(msg);
           setIsLoading(false);
           return;
         }
 
         await signup(email.trim(), password, displayName.trim() || undefined);
-        success('Account created! Please verify your email before logging in.');
+        success('Akun berhasil dibuat! Silakan verifikasi email Anda sebelum login.');
         // Reset form
         setEmail('');
         setPassword('');
@@ -90,52 +102,60 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       } else {
         // Login validation
         if (!password) {
-          showError('Password is required');
+          const msg = 'Password wajib diisi';
+          showError(msg);
+          alert(msg);
           setIsLoading(false);
           return;
         }
 
         await login(email.trim(), password);
-        success('Logged in successfully!');
+        success('Login berhasil!');
         onSuccess?.();
       }
     } catch (err) {
       const error = err as FirebaseError;
-      let errorMessage = 'An error occurred';
+      let errorMessage = 'Terjadi kesalahan';
       
       switch (error.code) {
         case 'auth/email-already-in-use':
-          errorMessage = 'Email already in use. Please use a different email or login.';
+          errorMessage = 'Email sudah digunakan. Silakan gunakan email lain atau login.';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address. Please check and try again.';
+          errorMessage = 'Format email tidak valid. Silakan periksa dan coba lagi.';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password is too weak. Please use at least 6 characters.';
+          errorMessage = 'Password terlalu lemah. Silakan gunakan minimal 6 karakter.';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email. Please register first.';
+          if (mode === 'login') {
+            errorMessage = 'Email atau password salah. Silakan periksa dan coba lagi.';
+          } else {
+            errorMessage = 'Akun tidak ditemukan. Silakan daftar terlebih dahulu.';
+          }
           break;
         case 'auth/wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
+          errorMessage = 'Email atau password salah. Silakan periksa dan coba lagi.';
           break;
         case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password. Please check and try again.';
+          errorMessage = 'Email atau password salah. Silakan periksa dan coba lagi.';
           break;
         case 'auth/too-many-requests':
-          errorMessage = 'Too many failed attempts. Please try again later.';
+          errorMessage = 'Terlalu banyak percobaan gagal. Silakan coba lagi nanti.';
           break;
         case 'auth/network-request-failed':
-          errorMessage = 'Network error. Please check your connection and try again.';
+          errorMessage = 'Kesalahan jaringan. Silakan periksa koneksi internet Anda.';
           break;
         case 'auth/user-disabled':
-          errorMessage = 'This account has been disabled. Please contact support.';
+          errorMessage = 'Akun ini telah dinonaktifkan. Silakan hubungi dukungan.';
           break;
         default:
-          errorMessage = error.message || 'An error occurred. Please try again.';
+          errorMessage = error.message || 'Terjadi kesalahan. Silakan coba lagi.';
       }
       
       showError(errorMessage);
+      // Also show browser alert for better visibility
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }

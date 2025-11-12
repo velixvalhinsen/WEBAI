@@ -17,6 +17,23 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    
+    // Email validation
+    if (!email.trim()) {
+      const msg = 'Email wajib diisi';
+      showError(msg);
+      alert(msg);
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      const msg = 'Format email tidak valid';
+      showError(msg);
+      alert(msg);
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -25,23 +42,25 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
       onSuccess?.();
     } catch (err) {
       const error = err as FirebaseError;
-      let errorMessage = 'An error occurred';
+      let errorMessage = 'Terjadi kesalahan';
       
       switch (error.code) {
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email';
+          errorMessage = 'Email tidak ditemukan. Silakan periksa email Anda atau daftar terlebih dahulu.';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          errorMessage = 'Format email tidak valid. Silakan periksa dan coba lagi.';
           break;
         case 'auth/too-many-requests':
-          errorMessage = 'Too many requests. Please try again later';
+          errorMessage = 'Terlalu banyak permintaan. Silakan coba lagi nanti.';
           break;
         default:
-          errorMessage = error.message || 'An error occurred';
+          errorMessage = error.message || 'Terjadi kesalahan. Silakan coba lagi.';
       }
       
       showError(errorMessage);
+      // Also show browser alert for better visibility
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
