@@ -79,7 +79,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
           title={alert.title}
         />
         <div className="w-full">
-        <div className="bg-chat-dark rounded-lg p-4 sm:p-6 text-center">
+          <div className="bg-chat-dark rounded-lg p-4 sm:p-6 text-center">
             <div className="mb-6">
               <div className="mx-auto w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,6 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
             </p>
           </div>
         </div>
-      </div>
       </>
     );
   }
@@ -125,7 +124,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
         title={alert.title}
       />
       <div className="w-full">
-      <div className="bg-chat-dark rounded-lg p-4 sm:p-6">
+        <div className="bg-chat-dark rounded-lg p-4 sm:p-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-white mb-2">Reset Password</h2>
             <p className="text-gray-400 text-sm">
