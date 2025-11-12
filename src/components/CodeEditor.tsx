@@ -65,50 +65,80 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
     if (!editorRef.current) return;
 
     let editor: any = null;
+    let isMounted = true;
 
-    loadMonaco().then((monaco) => {
-      if (!editorRef.current) return;
+    setIsLoading(true);
 
-      // Initialize Monaco Editor
-      editor = monaco.editor.create(editorRef.current, {
-        value,
-        language: languageMap[language] || language || 'plaintext',
-        theme: 'vs-dark',
-        automaticLayout: true,
-        minimap: { enabled: true },
-        fontSize: 14,
-        lineNumbers: 'on',
-        roundedSelection: false,
-        scrollBeyondLastLine: false,
-        readOnly: false,
-        wordWrap: 'on',
-        tabSize: 2,
-        insertSpaces: true,
+    loadMonaco()
+      .then((monaco) => {
+        if (!editorRef.current || !isMounted) return;
+
+        // Dispose existing editor if any
+        if (editorInstanceRef.current) {
+          editorInstanceRef.current.dispose();
+          editorInstanceRef.current = null;
+        }
+
+        // Initialize Monaco Editor
+        editor = monaco.editor.create(editorRef.current, {
+          value: value || '',
+          language: languageMap[language] || language || 'plaintext',
+          theme: 'vs-dark',
+          automaticLayout: true,
+          minimap: { enabled: true },
+          fontSize: 14,
+          lineNumbers: 'on',
+          roundedSelection: false,
+          scrollBeyondLastLine: false,
+          readOnly: false,
+          wordWrap: 'on',
+          tabSize: 2,
+          insertSpaces: true,
+        });
+
+        editorInstanceRef.current = editor;
+        
+        if (isMounted) {
+          setIsLoading(false);
+        }
+
+        // Handle content changes
+        editor.onDidChangeModelContent(() => {
+          if (isMounted) {
+            const newValue = editor.getValue();
+            onChange(newValue);
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to load Monaco Editor:', error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       });
-
-      editorInstanceRef.current = editor;
-      setIsLoading(false);
-
-      // Handle content changes
-      editor.onDidChangeModelContent(() => {
-        const newValue = editor.getValue();
-        onChange(newValue);
-      });
-    });
 
     return () => {
+      isMounted = false;
       if (editor) {
         editor.dispose();
       }
     };
-  }, [language]);
+  }, [language, value, onChange]);
 
-  // Update editor value when prop changes
+  // Update editor value when prop changes (only if different)
   useEffect(() => {
-    if (editorInstanceRef.current && editorInstanceRef.current.getValue() !== value) {
-      editorInstanceRef.current.setValue(value);
+    if (editorInstanceRef.current && !isLoading) {
+      const currentValue = editorInstanceRef.current.getValue();
+      if (currentValue !== value) {
+        // Preserve cursor position
+        const position = editorInstanceRef.current.getPosition();
+        editorInstanceRef.current.setValue(value || '');
+        if (position) {
+          editorInstanceRef.current.setPosition(position);
+        }
+      }
     }
-  }, [value]);
+  }, [value, isLoading]);
 
   if (isLoading) {
     return (

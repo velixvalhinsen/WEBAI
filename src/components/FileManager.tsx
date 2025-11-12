@@ -105,7 +105,29 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
         }
       }
 
-      setFiles(fileTree);
+      // Sort file tree: folders first, then files, both alphabetically
+      const sortFileTree = (nodes: FileNode[]): FileNode[] => {
+        return nodes
+          .sort((a, b) => {
+            // Folders first
+            if (a.type !== b.type) {
+              return a.type === 'folder' ? -1 : 1;
+            }
+            // Then alphabetically
+            return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+          })
+          .map(node => {
+            if (node.type === 'folder' && node.children) {
+              return {
+                ...node,
+                children: sortFileTree(node.children)
+              };
+            }
+            return node;
+          });
+      };
+
+      setFiles(sortFileTree(fileTree));
       success('ZIP file extracted successfully!');
     } catch (err) {
       console.error('Error extracting ZIP:', err);
