@@ -1,13 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
 import { CodeEditor } from './CodeEditor';
+import { MessageBubble } from './MessageBubble';
+import { InputBox } from './InputBox';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../contexts/AuthContext';
 import { fileStorage } from '../utils/fileStorage';
+import { streamChatCompletion } from '../utils/api';
+import { Provider } from '../utils/api';
+import { Message } from '../utils/localStorage';
 
 interface FileManagerProps {
   onClose: () => void;
   onAskAI?: (question: string, context?: string) => void;
+  apiKey?: string | null;
+  provider?: Provider;
 }
 
 interface FileNode {
@@ -18,14 +25,18 @@ interface FileNode {
   children?: FileNode[];
 }
 
-export function FileManager({ onClose, onAskAI }: FileManagerProps) {
+export function FileManager({ onClose, onAskAI, apiKey, provider = 'groq' }: FileManagerProps) {
   const { currentUser } = useAuth();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(true);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [aiMessages, setAiMessages] = useState<Message[]>([]);
+  const [isAILoading, setIsAILoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { success, error: showError } = useToast();
 
   // Get user ID for storage
@@ -299,6 +310,87 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
     return filename.split('.').pop()?.toLowerCase() || '';
   };
 
+  // Scroll to bottom of AI messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [aiMessages, isAILoading]);
+
+  const handleAskAI = async (question: string, context?: string) => {
+    if (!selectedFile) return;
+
+    const fullQuestion = context 
+      ? `${question}\n\nContext:\n${context}` 
+      : question;
+
+    // Toggle AI panel open
+    if (!showAIPanel) {
+      setShowAIPanel(true);
+    }
+
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: fullQuestion,
+      timestamp: Date.now(),
+    };
+
+    setAiMessages(prev => [...prev, userMessage]);
+    setIsAILoading(true);
+
+    try {
+      // Prepare messages for API
+      const messagesForAPI = [...aiMessages, userMessage].map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      // Add system prompt
+      const systemPrompt = selectedFile 
+        ? `You are a helpful coding assistant. The user is working on a file: ${selectedFile.path}. Help them understand and improve their code.`
+        : 'You are a helpful coding assistant.';
+
+      const messagesWithSystem = [
+        { role: 'system' as const, content: systemPrompt },
+        ...messagesForAPI,
+      ];
+
+      // Stream response
+      let assistantContent = '';
+      const assistantMessageId = (Date.now() + 1).toString();
+
+      for await (const chunk of streamChatCompletion(
+        messagesWithSystem.map(m => ({ role: m.role, content: m.content })),
+        apiKey || null,
+        provider,
+        (err) => {
+          showError(err.message);
+        }
+      )) {
+        if (chunk.done) break;
+        assistantContent += chunk.content;
+
+        // Update assistant message in real-time
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: assistantContent,
+          timestamp: Date.now(),
+        };
+
+        setAiMessages(prev => {
+          const withoutLast = prev.slice(0, -1);
+          return [...withoutLast, userMessage, assistantMessage];
+        });
+      }
+    } catch (error) {
+      console.error('Error sending message to AI:', error);
+      showError(error instanceof Error ? error.message : 'Failed to send message');
+    } finally {
+      setIsAILoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-chat-darker">
       {/* Toolbar */}
@@ -360,7 +452,7 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* File Tree Sidebar */}
-        <div className="w-64 border-r border-chat-border overflow-y-auto bg-chat-darker">
+        <div className="w-64 border-r border-chat-border overflow-y-auto bg-chat-darker flex-shrink-0">
             {isLoadingFiles ? (
               <div className="p-8 text-center text-gray-400">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
@@ -382,7 +474,7 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
           </div>
 
         {/* Editor Area */}
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col transition-all ${showAIPanel ? 'mr-96' : ''}`}>
           {selectedFile ? (
             <>
               <div className="p-2 border-b border-chat-border bg-chat-darker flex items-center justify-between">
@@ -392,21 +484,21 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
                   </svg>
                   <span className="text-sm text-gray-300">{selectedFile.path}</span>
                 </div>
-                {onAskAI && (
-                  <button
-                    onClick={() => {
+                <button
+                  onClick={() => {
+                    if (selectedFile) {
                       const context = `File: ${selectedFile.path}\n\nContent:\n${selectedFile.content?.substring(0, 2000)}...`;
-                      onAskAI(`Analyze this file and help me understand it: ${selectedFile.path}`, context);
-                    }}
-                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
-                    title="Ask AI about this file"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
-                    Ask AI
-                  </button>
-                )}
+                      handleAskAI(`Analyze this file and help me understand it: ${selectedFile.path}`, context);
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                  title="Ask AI about this file"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                  Ask AI
+                </button>
               </div>
               <div className="flex-1 overflow-hidden">
                 <CodeEditor
@@ -449,6 +541,85 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
             </div>
           )}
         </div>
+
+        {/* AI Panel - Toggleable */}
+        {showAIPanel && (
+          <div className="w-96 border-l border-chat-border bg-chat-dark flex flex-col flex-shrink-0">
+            {/* AI Panel Header */}
+            <div className="p-3 border-b border-chat-border flex items-center justify-between bg-chat-darker">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
+              </div>
+              <button
+                onClick={() => setShowAIPanel(false)}
+                className="p-1 hover:bg-chat-hover rounded transition-colors"
+                title="Close AI Panel"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* AI Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {aiMessages.length === 0 ? (
+                <div className="text-center text-gray-400 mt-8">
+                  <svg className="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                  <p className="text-sm">Click "Ask AI" to start a conversation</p>
+                  {selectedFile && (
+                    <p className="text-xs text-gray-500 mt-2">About: {selectedFile.path}</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {aiMessages.map((message) => (
+                    <MessageBubble key={message.id} message={message} />
+                  ))}
+                  {isAILoading && (
+                    <div className="flex gap-3 p-3 bg-chat-dark animate-fade-in">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-chat-border">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-semibold text-gray-300 mb-2">G Assistant</div>
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+
+            {/* AI Input */}
+            <div className="border-t border-chat-border bg-chat-darker p-3">
+              <InputBox
+                onSend={(message) => {
+                  if (selectedFile) {
+                    const context = `File: ${selectedFile.path}\n\nContent:\n${selectedFile.content?.substring(0, 2000)}...`;
+                    handleAskAI(message, context);
+                  } else {
+                    handleAskAI(message);
+                  }
+                }}
+                isLoading={isAILoading}
+                disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

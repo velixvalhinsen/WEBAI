@@ -221,15 +221,8 @@ function App() {
         ) : currentUser ? (
           <FileManager
             onClose={() => setCurrentView('chat')}
-            onAskAI={(question, context) => {
-              setCurrentView('chat');
-              // Create new chat with AI question including context
-              createNewChat();
-              const fullQuestion = context ? `${question}\n\nContext:\n${context}` : question;
-              setTimeout(() => {
-                sendMessage(fullQuestion, apiKey, provider);
-              }, 100);
-            }}
+            apiKey={apiKey}
+            provider={provider}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
