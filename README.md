@@ -23,9 +23,8 @@ This project is open source and available for personal and commercial use.
 
 - Built with [React](https://react.dev/)
 - Styled with [TailwindCSS](https://tailwindcss.com/)
-- Powered by [OpenAI](https://openai.com/) and [Groq](https://groq.com/)
 - Bundled with [Vite](https://vitejs.dev/)
-- Deployed with [Vercel](https://vercel.com/) and [GitHub Pages](https://pages.github.com/)
+- Owner Gimnas Irwandi [Instagram](https://instagram.com/_gmns)
 
 ---
 
