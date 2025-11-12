@@ -474,7 +474,7 @@ export function FileManager({ onClose, onAskAI, apiKey, provider = 'groq' }: Fil
           </div>
 
         {/* Editor Area */}
-        <div className={`flex-1 flex flex-col transition-all ${showAIPanel ? 'mr-96' : ''}`}>
+        <div className="flex-1 flex flex-col min-w-0">
           {selectedFile ? (
             <>
               <div className="p-2 border-b border-chat-border bg-chat-darker flex items-center justify-between">
