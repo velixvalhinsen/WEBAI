@@ -8,10 +8,12 @@ import { UserMenu } from './components/UserMenu';
 import { FileManager } from './components/FileManager';
 import { useChat } from './hooks/useChat';
 import { useToast } from './hooks/useToast';
+import { useAuth } from './contexts/AuthContext';
 import { storage } from './utils/localStorage';
 import { Provider } from './utils/api';
 
 function App() {
+  const { currentUser } = useAuth();
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -178,27 +180,30 @@ function App() {
               </svg>
               <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Chat</span>
             </button>
-            <button
-              id="file-manager-button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('✅ File Manager button clicked!');
-                setCurrentView('files');
-              }}
-              className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
-                currentView === 'files'
-                  ? 'bg-blue-600 border-blue-400 text-white'
-                  : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
-              }`}
-              title="File Manager - Upload ZIP and edit code"
-              aria-label="Open File Manager"
-            >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-              <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
-            </button>
+            {/* File Manager Button - Only show if logged in */}
+            {currentUser && (
+              <button
+                id="file-manager-button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('✅ File Manager button clicked!');
+                  setCurrentView('files');
+                }}
+                className={`px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 font-semibold flex-shrink-0 ${
+                  currentView === 'files'
+                    ? 'bg-blue-600 border-blue-400 text-white'
+                    : 'bg-chat-dark border-chat-border text-gray-300 hover:bg-chat-hover'
+                }`}
+                title="File Manager - Upload ZIP and edit code"
+                aria-label="Open File Manager"
+              >
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                <span className="text-sm font-bold whitespace-nowrap hidden sm:inline">Files</span>
+              </button>
+            )}
             {/* User Menu */}
             <UserMenu />
           </div>
@@ -213,7 +218,7 @@ function App() {
             disabled={!apiKey && !import.meta.env.VITE_PROXY_URL}
             onCopyCode={handleCopyCode}
           />
-        ) : (
+        ) : currentUser ? (
           <FileManager
             onClose={() => setCurrentView('chat')}
             onAskAI={(question, context) => {
@@ -226,6 +231,18 @@ function App() {
               }, 100);
             }}
           />
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <p className="text-lg mb-4">Please login to access File Manager</p>
+              <button
+                onClick={() => setCurrentView('chat')}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+              >
+                Back to Chat
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
