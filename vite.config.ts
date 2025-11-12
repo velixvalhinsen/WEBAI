@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+// Note: vite-plugin-monaco-editor has ESM/CommonJS compatibility issues
+// Using dynamic import in CodeEditor.tsx instead
 
 // https://vitejs.dev/config/
 // Base path: /WEBAI/ for GitHub Pages, / for Vercel
@@ -8,7 +10,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
-    monacoEditorPlugin({}),
+    // monacoEditorPlugin disabled - using dynamic import in CodeEditor.tsx instead
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png'],
