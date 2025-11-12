@@ -318,8 +318,13 @@ export function FileManager({ onClose, onAskAI, apiKey, provider = 'groq' }: Fil
   const handleAskAI = async (question: string, context?: string) => {
     if (!selectedFile) return;
 
-    const fullQuestion = context 
-      ? `${question}\n\nContext:\n${context}` 
+    // Limit context size to avoid token limit (max ~1500 chars = ~400 tokens)
+    const limitedContext = context 
+      ? context.substring(0, 1500) + (context.length > 1500 ? '...' : '')
+      : undefined;
+
+    const fullQuestion = limitedContext 
+      ? `${question}\n\nContext:\n${limitedContext}` 
       : question;
 
     // Toggle AI panel open
@@ -474,7 +479,9 @@ export function FileManager({ onClose, onAskAI, apiKey, provider = 'groq' }: Fil
                 <button
                   onClick={() => {
                     if (selectedFile) {
-                      const context = `File: ${selectedFile.path}\n\nContent:\n${selectedFile.content?.substring(0, 2000)}...`;
+                      // Limit file content to ~1000 chars to avoid token limit
+                      const contentPreview = selectedFile.content?.substring(0, 1000) || '';
+                      const context = `File: ${selectedFile.path}\n\nContent:\n${contentPreview}${selectedFile.content && selectedFile.content.length > 1000 ? '...\n\n(Content truncated due to size limit)' : ''}`;
                       handleAskAI(`Analyze this file and help me understand it: ${selectedFile.path}`, context);
                     }
                   }}
@@ -595,7 +602,9 @@ export function FileManager({ onClose, onAskAI, apiKey, provider = 'groq' }: Fil
               <InputBox
                 onSend={(message) => {
                   if (selectedFile) {
-                    const context = `File: ${selectedFile.path}\n\nContent:\n${selectedFile.content?.substring(0, 2000)}...`;
+                    // Limit file content to ~1000 chars to avoid token limit
+                    const contentPreview = selectedFile.content?.substring(0, 1000) || '';
+                    const context = `File: ${selectedFile.path}\n\nContent:\n${contentPreview}${selectedFile.content && selectedFile.content.length > 1000 ? '...\n\n(Content truncated due to size limit)' : ''}`;
                     handleAskAI(message, context);
                   } else {
                     handleAskAI(message);
