@@ -339,28 +339,15 @@ export function FileManager({ onClose, onAskAI, apiKey, provider = 'groq' }: Fil
     setIsAILoading(true);
 
     try {
-      // Prepare messages for API
-      const messagesForAPI = [...aiMessages, userMessage].map(msg => ({
-        role: msg.role,
-        content: msg.content,
-      }));
-
-      // Add system prompt
-      const systemPrompt = selectedFile 
-        ? `You are a helpful coding assistant. The user is working on a file: ${selectedFile.path}. Help them understand and improve their code.`
-        : 'You are a helpful coding assistant.';
-
-      const messagesWithSystem = [
-        { role: 'system' as const, content: systemPrompt },
-        ...messagesForAPI,
-      ];
-
       // Stream response
       let assistantContent = '';
       const assistantMessageId = (Date.now() + 1).toString();
 
+      // Prepare messages for streamChatCompletion (system messages are handled internally)
+      const messagesForStream: Message[] = [...aiMessages, userMessage];
+
       for await (const chunk of streamChatCompletion(
-        messagesWithSystem.map(m => ({ role: m.role, content: m.content })),
+        messagesForStream,
         apiKey || null,
         provider,
         (err) => {
