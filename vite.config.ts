@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 
 // https://vitejs.dev/config/
 // Base path: /WEBAI/ for GitHub Pages, / for Vercel
@@ -8,6 +9,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
+    monacoEditorPlugin({}),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'Gambar/ChatGPT_Image_Nov_11__2025__07_22_25_AM-removebg-preview.png'],

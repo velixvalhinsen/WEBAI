@@ -5,6 +5,7 @@ import { APIKeyModal } from './components/APIKeyModal';
 import { ToastContainer } from './components/ToastContainer';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { UserMenu } from './components/UserMenu';
+import { FileManager } from './components/FileManager';
 import { useChat } from './hooks/useChat';
 import { useToast } from './hooks/useToast';
 import { storage } from './utils/localStorage';
@@ -14,6 +15,7 @@ function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>(storage.getProvider());
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showFileManager, setShowFileManager] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toasts, removeToast, success, error: showErrorToast } = useToast();
 
@@ -143,6 +145,17 @@ function App() {
                 <span className="flex-1 truncate">{error}</span>
               </div>
             )}
+            {/* File Manager Button */}
+            <button
+              onClick={() => setShowFileManager(true)}
+              className="p-2 bg-chat-dark hover:bg-chat-hover rounded-lg border border-chat-border transition-colors"
+              title="File Manager"
+              aria-label="File Manager"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            </button>
             {/* User Menu */}
             <UserMenu />
           </div>
@@ -171,6 +184,22 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* File Manager */}
+      {showFileManager && (
+        <FileManager
+          onClose={() => setShowFileManager(false)}
+          onAskAI={(question, context) => {
+            setShowFileManager(false);
+            // Create new chat with AI question including context
+            createNewChat();
+            const fullQuestion = context ? `${question}\n\nContext:\n${context}` : question;
+            setTimeout(() => {
+              sendMessage(fullQuestion, apiKey, provider);
+            }, 100);
+          }}
+        />
+      )}
     </div>
   );
 }
