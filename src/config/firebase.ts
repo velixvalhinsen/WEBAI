@@ -45,3 +45,8 @@ if (isFirebaseConfigured) {
 export { auth };
 export default app;
 
+// Export function to check if Firebase is configured
+export const isFirebaseConfigured = () => {
+  return !!(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
+};
+

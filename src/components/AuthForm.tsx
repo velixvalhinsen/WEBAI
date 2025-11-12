@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
 import { FirebaseError } from 'firebase/app';
+import { isFirebaseConfigured } from '../config/firebase';
 
 type AuthMode = 'login' | 'register';
 
@@ -87,6 +88,53 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
       setIsLoading(false);
     }
   };
+
+  // Check if Firebase is configured
+  if (!isFirebaseConfigured()) {
+    return (
+      <div className="w-full">
+        <div className="bg-chat-dark rounded-lg p-4 sm:p-6">
+          <div className="text-center">
+            <div className="mb-4">
+              <svg className="w-16 h-16 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Firebase Not Configured</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              Authentication is currently disabled. To enable login/register features:
+            </p>
+            <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4 text-left mb-4">
+              <p className="text-yellow-400 text-sm font-medium mb-2">📝 Setup Instructions:</p>
+              <ol className="text-gray-300 text-xs space-y-1 list-decimal list-inside">
+                <li>Go to GitHub repository Settings</li>
+                <li>Navigate to Secrets and variables → Actions</li>
+                <li>Add these 6 secrets:
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-0.5">
+                    <li>VITE_FIREBASE_API_KEY</li>
+                    <li>VITE_FIREBASE_AUTH_DOMAIN</li>
+                    <li>VITE_FIREBASE_PROJECT_ID</li>
+                    <li>VITE_FIREBASE_STORAGE_BUCKET</li>
+                    <li>VITE_FIREBASE_MESSAGING_SENDER_ID</li>
+                    <li>VITE_FIREBASE_APP_ID</li>
+                  </ul>
+                </li>
+                <li>Trigger a new deployment</li>
+              </ol>
+            </div>
+            <a
+              href="https://github.com/gimnas11/WEBAI/settings/secrets/actions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Open GitHub Secrets →
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
