@@ -48,7 +48,7 @@ export function FileManager({ onClose, onAskAI }: FileManagerProps) {
         
         if (savedFiles && savedFiles.length > 0) {
           setFiles(savedFiles);
-          success('Files loaded from previous session');
+          // Don't show toast on initial load to avoid spam
         }
 
         // Load expanded folders state
