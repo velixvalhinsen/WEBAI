@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/WEBAI/dev-sw.js?dev-sw', { scope: '/WEBAI/', type: 'classic' })

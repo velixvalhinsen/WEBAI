@@ -4,6 +4,7 @@ import { ChatWindow } from './components/ChatWindow';
 import { APIKeyModal } from './components/APIKeyModal';
 import { ToastContainer } from './components/ToastContainer';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { UserMenu } from './components/UserMenu';
 import { useChat } from './hooks/useChat';
 import { useToast } from './hooks/useToast';
 import { storage } from './utils/localStorage';
@@ -80,6 +81,7 @@ function App() {
     success('Code copied to clipboard!');
   };
 
+  // Main app - always visible, login via UserMenu
   return (
     <div className="flex h-screen bg-chat-darker text-white overflow-hidden">
       {/* Mobile menu button */}
@@ -132,14 +134,18 @@ function App() {
             />
             <h1 className="text-base sm:text-lg font-semibold">G Chat</h1>
           </div>
-          {error && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm max-w-[calc(100vw-12rem)] sm:max-w-none">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="flex-1 truncate">{error}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {error && (
+              <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-xs sm:text-sm">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="flex-1 truncate">{error}</span>
+              </div>
+            )}
+            {/* User Menu */}
+            <UserMenu />
+          </div>
         </header>
 
         {/* Chat Window */}
