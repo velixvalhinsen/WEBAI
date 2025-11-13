@@ -117,28 +117,27 @@ export default {
         let hfResponse;
         let lastError;
         
-        // Try RMBG-1.4 model - use router endpoint with correct format
+        // Try background removal using Hugging Face
+        // Note: Model availability may vary, trying multiple approaches
         try {
-          // Convert base64 to proper format for Hugging Face
-          // Hugging Face expects the image in a specific format
-          hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4', {
+          // First, try old inference API (might still work)
+          hfResponse = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${hfToken}`,
             },
             body: JSON.stringify({
-              inputs: image, // Base64 image data (without data:image/... prefix)
+              inputs: image, // Base64 image data
             }),
           });
           
-          console.log(`[Worker] Hugging Face response status: ${hfResponse.status}`);
+          console.log(`[Worker] Old API response status: ${hfResponse.status}`);
           
-          // If 404, the model might not be available via router endpoint
-          // Try alternative: use old inference API endpoint
-          if (hfResponse.status === 404) {
-            console.log('[Worker] Router endpoint 404, trying old inference API...');
-            hfResponse = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
+          // If 404 or not available, try router endpoint
+          if (hfResponse.status === 404 || hfResponse.status === 503) {
+            console.log('[Worker] Old API not available, trying router endpoint...');
+            hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -148,13 +147,13 @@ export default {
                 inputs: image,
               }),
             });
-            console.log(`[Worker] Old API response status: ${hfResponse.status}`);
+            console.log(`[Worker] Router endpoint response status: ${hfResponse.status}`);
           }
         } catch (error) {
           console.error('[Worker] Error calling Hugging Face API:', error);
           return new Response(
             JSON.stringify({ 
-              error: `Failed to call background removal API: ${error.message}. Model mungkin tidak tersedia atau endpoint berubah.` 
+              error: `Failed to call background removal API: ${error.message}. Model briaai/RMBG-1.4 mungkin tidak tersedia. Silakan cek ketersediaan model di Hugging Face atau gunakan service alternatif.` 
             }),
             {
               status: 500,
