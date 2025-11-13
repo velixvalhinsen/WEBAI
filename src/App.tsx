@@ -195,11 +195,8 @@ function App() {
     setShowApiKeyModal(false);
   };
 
-  // Get base path from vite config or environment
-  const basePath = import.meta.env.BASE_URL || '/WEBAI/';
-  
   return (
-    <HashRouter basename={basePath}>
+    <HashRouter>
       <AppContent 
         user={user} 
         setUser={setUser} 
