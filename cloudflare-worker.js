@@ -44,14 +44,114 @@ export default {
       console.log(`[${new Date().toISOString()}] ${request.method} ${path} from origin: ${origin}`);
       console.log(`[Worker] Full URL: ${request.url}, Path: ${path}`);
       
-      // Handle image generation endpoint - check path first before parsing body
+      // Handle image generation and editing endpoints - check path first before parsing body
       // Normalize path (remove trailing slash, handle different formats)
       const normalizedPath = path.replace(/\/$/, '');
       // Check for image endpoint - must be exact match or ends with /image
       const isImageEndpoint = normalizedPath === '/image' || 
                               normalizedPath.endsWith('/image') ||
                               normalizedPath === 'image';
-      console.log(`[Worker] Normalized path: ${normalizedPath}, Is image endpoint: ${isImageEndpoint}`);
+      // Check for remove-bg endpoint
+      const isRemoveBgEndpoint = normalizedPath === '/remove-bg' || 
+                                  normalizedPath.endsWith('/remove-bg') ||
+                                  normalizedPath === 'remove-bg';
+      console.log(`[Worker] Normalized path: ${normalizedPath}, Is image endpoint: ${isImageEndpoint}, Is remove-bg endpoint: ${isRemoveBgEndpoint}`);
+      
+      if (isRemoveBgEndpoint) {
+        console.log('[Worker] Handling background removal request');
+        
+        // Clone request to avoid consuming body if we need to read it
+        const clonedRequest = request.clone();
+        let body;
+        try {
+          body = await clonedRequest.json();
+          console.log('[Worker] Remove-bg request body keys:', Object.keys(body || {}));
+        } catch (jsonError) {
+          console.error('[Worker] Error parsing JSON:', jsonError);
+          return new Response(
+            JSON.stringify({ error: 'Invalid JSON in request body', details: jsonError.message }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        const { image } = body;
+        
+        if (!image) {
+          console.error('[Worker] Image missing in request body. Body keys:', Object.keys(body || {}));
+          return new Response(
+            JSON.stringify({ 
+              error: 'Image is required',
+              received_keys: Object.keys(body || {}),
+            }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        console.log(`[Worker] Background removal request, image data length: ${image.length}`);
+        
+        // Get Hugging Face token
+        const hfToken = env.HUGGINGFACE_API_TOKEN || env.HF_TOKEN;
+        
+        if (!hfToken) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Hugging Face API token not configured. Please set HUGGINGFACE_API_TOKEN or HF_TOKEN secret in Cloudflare Worker.' 
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        // Call Hugging Face API for background removal
+        // Using RMBG-1.4 model for background removal
+        const hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hfToken}`,
+          },
+          body: JSON.stringify({
+            inputs: image, // Base64 image data
+          }),
+        });
+        
+        console.log(`[Worker] Hugging Face response status: ${hfResponse.status}`);
+        
+        if (!hfResponse.ok) {
+          let errorText = await hfResponse.text();
+          
+          if (hfResponse.status === 401) {
+            errorText = 'Hugging Face API token invalid or expired. Please check your token.';
+          }
+          
+          return new Response(
+            JSON.stringify({ error: `Hugging Face API error: ${hfResponse.status} ${hfResponse.statusText}. ${errorText}` }),
+            {
+              status: hfResponse.status,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+        
+        // Get image blob and return it
+        const imageBlob = await hfResponse.blob();
+        console.log(`[Worker] Background removed, size: ${imageBlob.size}, type: ${imageBlob.type}`);
+        
+        return new Response(imageBlob, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': imageBlob.type || 'image/png',
+          },
+        });
+      }
       
       if (isImageEndpoint) {
         console.log('[Worker] Handling image generation request');

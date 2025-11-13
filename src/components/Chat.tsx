@@ -74,10 +74,10 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
     }
   }, [editingChatId]);
 
-  const handleSend = async (message: string) => {
-    if (!message.trim() || isLoading) return;
+  const handleSend = async (message: string, imageData?: string) => {
+    if ((!message.trim() && !imageData) || isLoading) return;
     if (apiKey || proxyUrl) {
-      await sendMessage(message, apiKey, provider);
+      await sendMessage(message, apiKey, provider, imageData);
     } else {
       setToast({ type: 'error', message: 'Please set your API key first' });
       setTimeout(() => setToast(null), 3000);

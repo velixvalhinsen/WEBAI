@@ -482,6 +482,173 @@ export function extractImagePrompt(message: string): string {
   return prompt || normalized;
 }
 
+// Helper function to detect if message is requesting image editing
+export function isImageEditRequest(message: string, hasUploadedImage: boolean): boolean {
+  if (!hasUploadedImage) return false;
+  
+  const normalized = message.toLowerCase().trim();
+  
+  // Keywords for background removal
+  const bgRemovalKeywords = [
+    'remove background',
+    'hapus background',
+    'hilangkan background',
+    'ganti background',
+    'ubah background',
+    'background removal',
+    'remove bg',
+    'hapus bg',
+    'hilangkan bg',
+    'transparent background',
+    'background transparan',
+  ];
+  
+  // Check if message contains background removal keywords
+  if (bgRemovalKeywords.some(keyword => normalized.includes(keyword))) {
+    return true;
+  }
+  
+  // Generic image editing keywords
+  const editKeywords = [
+    'edit',
+    'ubah',
+    'ganti',
+    'modify',
+    'change',
+    'process',
+    'proses',
+  ];
+  
+  // If has edit keywords and uploaded image, likely an edit request
+  if (editKeywords.some(keyword => normalized.includes(keyword))) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Detect what type of image editing is requested
+export function detectImageEditType(message: string): 'remove-bg' | 'face-swap' | 'other' {
+  const normalized = message.toLowerCase().trim();
+  
+  // Background removal
+  const bgRemovalKeywords = [
+    'remove background',
+    'hapus background',
+    'hilangkan background',
+    'ganti background',
+    'ubah background',
+    'background removal',
+    'remove bg',
+    'hapus bg',
+    'hilangkan bg',
+    'transparent background',
+    'background transparan',
+  ];
+  
+  if (bgRemovalKeywords.some(keyword => normalized.includes(keyword))) {
+    return 'remove-bg';
+  }
+  
+  // Face swap
+  const faceSwapKeywords = [
+    'face swap',
+    'swap face',
+    'tukar wajah',
+    'ganti wajah',
+    'ubah wajah',
+  ];
+  
+  if (faceSwapKeywords.some(keyword => normalized.includes(keyword))) {
+    return 'face-swap';
+  }
+  
+  return 'other';
+}
+
+// Background removal using Hugging Face
+export interface ImageEditResult {
+  imageUrl: string;
+  error?: string;
+}
+
+export async function removeBackground(imageData: string): Promise<ImageEditResult> {
+  try {
+    console.log('[ImageEdit] Removing background...');
+    
+    // Try to use backend proxy first if available
+    const useBackendProxy = PROXY_URL;
+    const isCloudflareWorker = PROXY_URL && PROXY_URL.includes('.workers.dev');
+    
+    let apiEndpoint: string;
+    
+    if (useBackendProxy) {
+      // Use backend proxy (Cloudflare Worker or Vercel)
+      const baseUrl = PROXY_URL.replace(/\/$/, '');
+      apiEndpoint = isCloudflareWorker 
+        ? `${baseUrl}/remove-bg` 
+        : `${baseUrl}/api/remove-bg`;
+      console.log('[ImageEdit] Using backend proxy:', apiEndpoint);
+    } else {
+      // Direct Hugging Face API (will fail due to CORS, but we'll handle it)
+      apiEndpoint = 'https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4';
+      console.log('[ImageEdit] Using direct API (may fail due to CORS)');
+    }
+    
+    // Convert base64 to blob if needed
+    let imageBlob: Blob;
+    if (imageData.startsWith('data:')) {
+      const response = await fetch(imageData);
+      imageBlob = await response.blob();
+    } else {
+      // Assume it's already a URL
+      const response = await fetch(imageData);
+      imageBlob = await response.blob();
+    }
+    
+    // Convert blob to base64 for API
+    const base64Image = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        // Remove data:image/...;base64, prefix
+        const base64Data = base64.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(imageBlob);
+    });
+    
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: base64Image, // Hugging Face expects 'inputs' field
+      }),
+    });
+    
+    console.log(`[ImageEdit] Response received, status: ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gagal remove background: ${response.status} ${response.statusText}. ${errorText}`);
+    }
+    
+    // Get image blob and return it
+    const resultBlob = await response.blob();
+    console.log('[ImageEdit] Background removed successfully, blob type:', resultBlob.type, 'size:', resultBlob.size);
+    
+    const imageUrl = URL.createObjectURL(resultBlob);
+    return { imageUrl };
+  } catch (error) {
+    console.error('[ImageEdit] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Gagal remove background';
+    return { imageUrl: '', error: errorMessage };
+  }
+}
+
 export async function validateApiKey(apiKey: string, provider: Provider = 'groq'): Promise<{ valid: boolean; error?: string }> {
   try {
     // Use a simpler model for validation

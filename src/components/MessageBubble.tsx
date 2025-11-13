@@ -73,6 +73,42 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
           {isUser ? 'You' : 'G Assistant'}
         </div>
         
+        {/* Display uploaded image (user message) */}
+        {isUser && message.uploadedImageUrl && (
+          <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">
+            <img
+              src={message.uploadedImageUrl}
+              alt="Uploaded image"
+              className="w-full h-auto max-w-md object-contain"
+              onLoad={() => {
+                console.log('[MessageBubble] Uploaded image loaded successfully');
+              }}
+              onError={(e) => {
+                console.error('[MessageBubble] Failed to load uploaded image');
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        
+        {/* Display edited image (assistant message) */}
+        {!isUser && message.editedImageUrl && (
+          <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">
+            <img
+              src={message.editedImageUrl}
+              alt={message.content || 'Edited image'}
+              className="w-full h-auto max-w-md object-contain"
+              onLoad={() => {
+                console.log('[MessageBubble] Edited image loaded successfully:', message.editedImageUrl);
+              }}
+              onError={(e) => {
+                console.error('[MessageBubble] Failed to load edited image:', message.editedImageUrl);
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        
         {/* Display generated image if available */}
         {message.imageUrl && (
           <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">

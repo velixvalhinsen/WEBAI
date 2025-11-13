@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Chat, Message, storage } from '../utils/localStorage';
-import { streamChatCompletion, Provider, generateImage, isImageGenerationRequest, extractImagePrompt } from '../utils/api';
+import { streamChatCompletion, Provider, generateImage, isImageGenerationRequest, extractImagePrompt, isImageEditRequest, detectImageEditType, removeBackground } from '../utils/api';
 
 export function useChat() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -104,8 +104,8 @@ export function useChat() {
     return gimnasPatterns.some(pattern => pattern.test(normalized));
   };
 
-  const sendMessage = useCallback(async (content: string, apiKey: string | null, provider: Provider = 'groq') => {
-    if (!content.trim() || isLoading) return;
+  const sendMessage = useCallback(async (content: string, apiKey: string | null, provider: Provider = 'groq', imageData?: string) => {
+    if ((!content.trim() && !imageData) || isLoading) return;
 
     setError(null);
     setIsLoading(true);
@@ -120,8 +120,9 @@ export function useChat() {
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: content.trim(),
+      content: content.trim() || (imageData ? 'Edit this image' : ''),
       timestamp: Date.now(),
+      uploadedImageUrl: imageData || undefined,
     };
 
     const updatedMessages = [...chat.messages, userMessage];
@@ -140,8 +141,100 @@ export function useChat() {
     let assistantContent = '';
 
     try {
-      // Check if requesting image generation
-      if (isImageGenerationRequest(content)) {
+      // Check if requesting image editing (has uploaded image)
+      if (imageData && isImageEditRequest(content, true)) {
+        const editType = detectImageEditType(content);
+        
+        // Show loading message
+        assistantContent = '🖼️ **Memproses gambar...**\n\nSedang memproses permintaan Anda. Mohon tunggu sebentar.';
+        
+        const loadingMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: assistantContent,
+          timestamp: Date.now(),
+          imageEditType: editType,
+        };
+
+        const loadingChat: Chat = {
+          ...updatedChat,
+          messages: [...updatedMessages, loadingMessage],
+          updatedAt: Date.now(),
+        };
+
+        setCurrentChat(loadingChat);
+        setChats(prev => prev.map(c => c.id === chat.id ? loadingChat : c));
+        storage.saveChat(loadingChat);
+
+        // Process image editing based on type
+        if (editType === 'remove-bg') {
+          const editResult = await removeBackground(imageData);
+          
+          if (editResult.error) {
+            assistantContent = `❌ **Gagal remove background**\n\n${editResult.error}\n\n**Tips:**\n- Pastikan koneksi internet Anda stabil\n- Coba lagi dalam beberapa saat\n- Jika menggunakan proxy, pastikan proxy sudah dikonfigurasi dengan benar`;
+            
+            const errorMessage: Message = {
+              id: assistantMessageId,
+              role: 'assistant',
+              content: assistantContent,
+              timestamp: Date.now(),
+              imageEditType: editType,
+            };
+
+            const errorChat: Chat = {
+              ...updatedChat,
+              messages: [...updatedMessages, errorMessage],
+              updatedAt: Date.now(),
+            };
+
+            setCurrentChat(errorChat);
+            setChats(prev => prev.map(c => c.id === chat.id ? errorChat : c));
+            storage.saveChat(errorChat);
+          } else if (editResult.imageUrl) {
+            assistantContent = `✅ **Background berhasil dihapus!**\n\nGambar Anda sudah tanpa background.`;
+            
+            const editedMessage: Message = {
+              id: assistantMessageId,
+              role: 'assistant',
+              content: assistantContent,
+              timestamp: Date.now(),
+              imageEditType: editType,
+              editedImageUrl: editResult.imageUrl,
+            };
+
+            const editedChat: Chat = {
+              ...updatedChat,
+              messages: [...updatedMessages, editedMessage],
+              updatedAt: Date.now(),
+            };
+
+            setCurrentChat(editedChat);
+            setChats(prev => prev.map(c => c.id === chat.id ? editedChat : c));
+            storage.saveChat(editedChat);
+          }
+        } else {
+          // Other edit types - not implemented yet
+          assistantContent = `⚠️ **Fitur belum tersedia**\n\nFitur "${editType}" sedang dalam pengembangan. Saat ini hanya support background removal.`;
+          
+          const notImplementedMessage: Message = {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: assistantContent,
+            timestamp: Date.now(),
+            imageEditType: editType,
+          };
+
+          const notImplementedChat: Chat = {
+            ...updatedChat,
+            messages: [...updatedMessages, notImplementedMessage],
+            updatedAt: Date.now(),
+          };
+
+          setCurrentChat(notImplementedChat);
+          setChats(prev => prev.map(c => c.id === chat.id ? notImplementedChat : c));
+          storage.saveChat(notImplementedChat);
+        }
+      } else if (isImageGenerationRequest(content)) {
         const imagePrompt = extractImagePrompt(content);
         
         // Show loading message

@@ -13,6 +13,9 @@ export interface Message {
   timestamp: number;
   imageUrl?: string; // URL untuk gambar yang di-generate
   isImageGeneration?: boolean; // Flag untuk menandai message sebagai image generation
+  uploadedImageUrl?: string; // Base64 atau URL gambar yang di-upload user
+  editedImageUrl?: string; // URL hasil editing (background removal, dll)
+  imageEditType?: 'remove-bg' | 'face-swap' | 'other'; // Jenis editing yang dilakukan
 }
 
 const CHATS_KEY = 'gai_chats';
