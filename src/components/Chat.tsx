@@ -310,9 +310,9 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full md:w-auto min-w-0 overflow-hidden">
-        {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2.5 md:py-3 flex items-center justify-between flex-shrink-0 z-10">
+      <div className="flex-1 flex flex-col w-full md:w-auto min-w-0 overflow-hidden relative">
+        {/* Header - Fixed at top */}
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2.5 md:py-3 flex items-center justify-between flex-shrink-0 fixed top-0 left-0 right-0 md:relative md:top-auto md:left-auto md:right-auto z-[75] md:z-10" style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -375,7 +375,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
         </header>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6 space-y-2 sm:space-y-3 md:space-y-4 min-h-0 pb-20 md:pb-6">
+        <div className="flex-1 overflow-y-auto px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6 space-y-2 sm:space-y-3 md:space-y-4 min-h-0 pt-14 md:pt-0 pb-20 md:pb-6">
           {!currentChat || currentChat.messages.length === 0 ? (
             <div className="flex items-center justify-center h-full px-4">
               <div className="text-center">

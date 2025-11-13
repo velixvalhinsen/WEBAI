@@ -93,7 +93,7 @@ export function InputBox({ onSend, isLoading, disabled, sidebarOpen = false, onT
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-1.5 md:px-4 py-2 md:py-4 flex-shrink-0 fixed bottom-0 left-0 right-0 md:relative md:z-10 ${sidebarOpen ? 'hidden md:flex z-40' : 'flex z-50'}`} style={{ width: '100%', maxWidth: '100%', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+    <div className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-1.5 md:px-4 py-2 md:py-4 flex-shrink-0 fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto z-[80] md:z-10 ${sidebarOpen ? 'hidden md:flex' : 'flex'}`} style={{ width: '100%', maxWidth: '100%', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
       <form onSubmit={handleSubmit} className="w-full mx-auto">
         {/* Preview uploaded image */}
         {uploadedImage && (
