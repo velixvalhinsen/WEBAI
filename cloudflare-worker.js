@@ -112,17 +112,56 @@ export default {
         }
         
         // Call Hugging Face API for background removal
-        // Using RMBG-1.4 model for background removal
-        const hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${hfToken}`,
-          },
-          body: JSON.stringify({
-            inputs: image, // Base64 image data
-          }),
-        });
+        // Try different model endpoints for background removal
+        // Option 1: Try RMBG-1.4 via inference API
+        let hfResponse;
+        let lastError;
+        
+        // Try RMBG-1.4 model - use router endpoint with correct format
+        try {
+          // Convert base64 to proper format for Hugging Face
+          // Hugging Face expects the image in a specific format
+          hfResponse = await fetch('https://router.huggingface.co/hf-inference/models/briaai/RMBG-1.4', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${hfToken}`,
+            },
+            body: JSON.stringify({
+              inputs: image, // Base64 image data (without data:image/... prefix)
+            }),
+          });
+          
+          console.log(`[Worker] Hugging Face response status: ${hfResponse.status}`);
+          
+          // If 404, the model might not be available via router endpoint
+          // Try alternative: use old inference API endpoint
+          if (hfResponse.status === 404) {
+            console.log('[Worker] Router endpoint 404, trying old inference API...');
+            hfResponse = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${hfToken}`,
+              },
+              body: JSON.stringify({
+                inputs: image,
+              }),
+            });
+            console.log(`[Worker] Old API response status: ${hfResponse.status}`);
+          }
+        } catch (error) {
+          console.error('[Worker] Error calling Hugging Face API:', error);
+          return new Response(
+            JSON.stringify({ 
+              error: `Failed to call background removal API: ${error.message}. Model mungkin tidak tersedia atau endpoint berubah.` 
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
         
         console.log(`[Worker] Hugging Face response status: ${hfResponse.status}`);
         
