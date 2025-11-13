@@ -5,9 +5,10 @@ interface InputBoxProps {
   onSend: (message: string, imageData?: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  onToast?: (toast: { type: 'success' | 'error' | 'warning' | 'info'; message: string }) => void;
 }
 
-export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
+export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps) {
   const [input, setInput] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,7 +32,14 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
 
     // Check if user is logged in
     if (!currentUser) {
-      alert('Anda harus login terlebih dahulu untuk mengupload gambar. Silakan login terlebih dahulu.');
+      if (onToast) {
+        onToast({ 
+          type: 'warning', 
+          message: 'Anda harus login terlebih dahulu untuk mengupload gambar. Silakan login terlebih dahulu.' 
+        });
+      } else {
+        alert('Anda harus login terlebih dahulu untuk mengupload gambar. Silakan login terlebih dahulu.');
+      }
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -41,13 +49,29 @@ export function InputBox({ onSend, isLoading, disabled }: InputBoxProps) {
 
     // Check if it's an image
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      if (onToast) {
+        onToast({ type: 'error', message: 'Please select an image file' });
+      } else {
+        alert('Please select an image file');
+      }
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
     // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert('Image size should be less than 10MB');
+      if (onToast) {
+        onToast({ type: 'error', message: 'Image size should be less than 10MB' });
+      } else {
+        alert('Image size should be less than 10MB');
+      }
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
