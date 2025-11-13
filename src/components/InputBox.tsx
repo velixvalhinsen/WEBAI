@@ -115,7 +115,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
           </div>
         )}
         
-        <div className="flex gap-1.5 sm:gap-2 items-end w-full min-w-0">
+        <div className="flex gap-1.5 sm:gap-2 items-center w-full min-w-0">
           {/* File upload button */}
           <input
             ref={fileInputRef}
@@ -128,7 +128,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
           />
           <label
             htmlFor="image-upload"
-            className={`flex-shrink-0 px-2.5 sm:px-3 py-2.5 sm:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation flex items-center justify-center min-w-[44px] min-h-[44px] ${
+            className={`flex-shrink-0 px-2.5 sm:px-3 h-[44px] sm:h-[42px] text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation flex items-center justify-center min-w-[44px] ${
               isLoading || disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             title="Upload image"
@@ -143,13 +143,13 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={disabled ? 'Please set your API key first' : uploadedImage ? 'Describe what to do with the image...' : 'Type your message...'}
-            className="flex-1 min-w-0 px-2.5 sm:px-3 md:px-4 py-2.5 sm:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 min-w-0 px-2.5 sm:px-3 md:px-4 h-[44px] sm:h-[42px] text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading || disabled}
           />
           <button
             type="submit"
             disabled={isLoading || (!input.trim() && !uploadedImage) || disabled}
-            className="flex-shrink-0 px-3 sm:px-4 md:px-6 py-2.5 sm:py-2 text-sm md:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation whitespace-nowrap min-w-[60px] sm:min-w-[80px] min-h-[44px]"
+            className="flex-shrink-0 px-3 sm:px-4 md:px-6 h-[44px] sm:h-[42px] text-sm md:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation whitespace-nowrap min-w-[60px] sm:min-w-[80px] flex items-center justify-center"
           >
             <span className="hidden sm:inline">Send</span>
             <span className="sm:hidden">✓</span>
