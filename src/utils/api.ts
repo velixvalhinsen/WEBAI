@@ -233,8 +233,8 @@ export async function* streamChatCompletion(
   }
 }
 
-// Hugging Face Inference API untuk image generation
-const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
+// Hugging Face Inference API untuk image generation - using new router endpoint
+const HUGGINGFACE_API_URL = 'https://router.huggingface.co/hf-inference/v1/models/stabilityai/stable-diffusion-xl-base-1.0';
 
 export interface ImageGenerationResult {
   imageUrl: string;

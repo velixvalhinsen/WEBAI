@@ -92,8 +92,8 @@ export default {
         
         console.log(`[Worker] Image generation request, prompt: ${prompt.substring(0, 50)}...`);
         
-        // Call Hugging Face API
-        const hfResponse = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
+        // Call Hugging Face API - using new router endpoint
+        const hfResponse = await fetch('https://router.huggingface.co/hf-inference/v1/models/stabilityai/stable-diffusion-xl-base-1.0', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
