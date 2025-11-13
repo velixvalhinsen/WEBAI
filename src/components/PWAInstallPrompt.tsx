@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,6 +10,46 @@ export function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [showManualInstructions, setShowManualInstructions] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
+
+  // Detect in-app browser
+  const detectInAppBrowser = () => {
+    const ua = window.navigator.userAgent.toLowerCase();
+    const standalone = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (standalone) {
+      return false;
+    }
+
+    const inAppIndicators = [
+      'instagram',
+      'fban',
+      'fbav',
+      'line',
+      'whatsapp',
+      'twitter',
+      'linkedinapp',
+      'snapchat',
+      'messenger',
+    ];
+
+    for (const indicator of inAppIndicators) {
+      if (ua.includes(indicator)) {
+        return true;
+      }
+    }
+
+    // Check for Android WebView that's not Chrome
+    if (ua.includes('android') && ua.includes('version') && !ua.includes('chrome')) {
+      const hasServiceWorker = 'serviceWorker' in navigator;
+      if (!hasServiceWorker) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   useEffect(() => {
     // Check if app is already installed
@@ -18,10 +58,16 @@ export function PWAInstallPrompt() {
       return;
     }
 
+    // Detect in-app browser
+    const inApp = detectInAppBrowser();
+    setIsInAppBrowser(inApp);
+
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const promptEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(promptEvent);
+      deferredPromptRef.current = promptEvent;
     };
 
     // Listen for app installed event
@@ -29,12 +75,48 @@ export function PWAInstallPrompt() {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
+      deferredPromptRef.current = null;
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Show prompt after 2 seconds if not dismissed
+    // Check if redirected from in-app browser (check URL params)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromInApp = urlParams.get('fromInApp') === 'true';
+    
+    // If redirected from in-app browser, wait for beforeinstallprompt and auto-trigger
+    if (fromInApp) {
+      const checkPrompt = setInterval(() => {
+        if (deferredPromptRef.current) {
+          clearInterval(checkPrompt);
+          // Auto-trigger install prompt after redirect
+          setTimeout(async () => {
+            try {
+              if (deferredPromptRef.current) {
+                await deferredPromptRef.current.prompt();
+                const { outcome } = await deferredPromptRef.current.userChoice;
+                if (outcome === 'accepted') {
+                  setShowPrompt(false);
+                }
+                setDeferredPrompt(null);
+                deferredPromptRef.current = null;
+              }
+            } catch (error) {
+              console.error('Auto-install prompt error:', error);
+            }
+          }, 500);
+        }
+      }, 100);
+
+      // Stop checking after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkPrompt);
+      }, 5000);
+    }
+
+    // Show prompt immediately if in-app browser, otherwise wait 2 seconds
+    const delay = inApp ? 500 : 2000;
     const timer = setTimeout(() => {
       const dismissed = localStorage.getItem('pwa-install-dismissed');
       if (!dismissed) {
@@ -46,7 +128,7 @@ export function PWAInstallPrompt() {
           setShowPrompt(true);
         }
       }
-    }, 2000);
+    }, delay);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -55,31 +137,82 @@ export function PWAInstallPrompt() {
     };
   }, []);
 
+  const redirectToChrome = () => {
+    const currentUrl = window.location.href.split('?')[0]; // Remove existing query params
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isAndroid = /android/i.test(ua);
+    const targetUrl = currentUrl + '?fromInApp=true';
+
+    if (isAndroid) {
+      // Android Intent URL to open in Chrome
+      const urlWithoutProtocol = targetUrl.replace(/https?:\/\//, '');
+      const chromeIntent = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(targetUrl)};end`;
+      window.location.href = chromeIntent;
+    } else {
+      // For iOS or other, just redirect to same URL
+      window.location.href = targetUrl;
+    }
+  };
+
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
+    // If in-app browser and no deferredPrompt, redirect to Chrome
+    if (isInAppBrowser && !deferredPrompt && !deferredPromptRef.current) {
+      redirectToChrome();
+      return;
+    }
+
+    // Check deferredPromptRef first (most up-to-date)
+    const prompt = deferredPromptRef.current || deferredPrompt;
+    
+    if (prompt) {
       // Use native install prompt if available
       try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        await prompt.prompt();
+        const { outcome } = await prompt.userChoice;
         if (outcome === 'accepted') {
           setShowPrompt(false);
         }
         setDeferredPrompt(null);
+        deferredPromptRef.current = null;
       } catch (error) {
         console.error('Install prompt error:', error);
         // Fallback to manual instructions
         setShowManualInstructions(true);
       }
     } else {
-      // Show manual instructions if no native prompt available
-      setShowManualInstructions(true);
+      // Check if Chrome/Edge - wait a bit more for beforeinstallprompt
+      const isChrome = /chrome|chromium|edg/i.test(navigator.userAgent);
+      if (isChrome) {
+        // Wait 1 second for beforeinstallprompt event
+        setTimeout(() => {
+          const updatedPrompt = deferredPromptRef.current || deferredPrompt;
+          if (updatedPrompt) {
+            // Retry with updated prompt
+            updatedPrompt.prompt().then(() => {
+              return updatedPrompt.userChoice;
+            }).then(({ outcome }) => {
+              if (outcome === 'accepted') {
+                setShowPrompt(false);
+              }
+              setDeferredPrompt(null);
+              deferredPromptRef.current = null;
+            }).catch((error) => {
+              console.error('Install prompt error:', error);
+              setShowManualInstructions(true);
+            });
+          } else {
+            setShowManualInstructions(true);
+          }
+        }, 1000);
+      } else {
+        setShowManualInstructions(true);
+      }
     }
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
     setShowManualInstructions(false);
-    // Store dismissal in localStorage to not show again for a while
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
@@ -130,6 +263,20 @@ export function PWAInstallPrompt() {
   }
 
   const instructions = getManualInstructions();
+  
+  // Determine button text based on current state
+  const getButtonText = () => {
+    const prompt = deferredPromptRef.current || deferredPrompt;
+    if (isInAppBrowser && !prompt) {
+      return 'Buka di Chrome untuk Install';
+    } else if (prompt) {
+      return 'Install Sekarang';
+    } else {
+      return 'Lihat Cara Install';
+    }
+  };
+  
+  const buttonText = getButtonText();
 
   return (
     <>
@@ -176,7 +323,11 @@ export function PWAInstallPrompt() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-white">Install G Chat</p>
-                <p className="text-xs text-gray-400">Install untuk akses lebih cepat dan pengalaman yang lebih baik</p>
+                <p className="text-xs text-gray-400">
+                  {isInAppBrowser && !deferredPrompt 
+                    ? 'Buka di Chrome untuk install aplikasi' 
+                    : 'Install untuk akses lebih cepat dan pengalaman yang lebih baik'}
+                </p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -190,7 +341,7 @@ export function PWAInstallPrompt() {
                 onClick={handleInstallClick}
                 className="flex-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
               >
-                {deferredPrompt ? 'Install Sekarang' : 'Lihat Cara Install'}
+                {buttonText}
               </button>
             </div>
           </div>
