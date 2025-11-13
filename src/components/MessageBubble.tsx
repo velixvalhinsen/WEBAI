@@ -53,11 +53,18 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
 
   return (
     <div
-      className={`flex gap-3 sm:gap-4 p-3 sm:p-4 md:p-6 animate-fade-in ${
-        isUser ? 'bg-chat-darker' : 'bg-chat-dark'
+      className={`flex gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 lg:p-6 transition-all duration-200 hover:bg-opacity-95 message-bubble rounded-lg sm:rounded-xl ${
+        isUser 
+          ? 'bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border-l-4 border-indigo-500 animate-slide-in-right' 
+          : 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-l-4 border-gray-600 animate-slide-in-left'
       }`}
     >
-      <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-chat-border">
+      {/* Avatar dengan efek glow */}
+      <div className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110 ${
+        isUser 
+          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 ring-2 ring-indigo-400/50' 
+          : 'bg-gradient-to-br from-gray-600 to-gray-700 ring-2 ring-gray-500/50'
+      }`}>
         {isUser ? (
           <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -69,13 +76,18 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-xs sm:text-sm font-semibold text-gray-300 mb-1.5 sm:mb-2">
-          {isUser ? 'You' : 'G Assistant'}
+        <div className={`text-xs sm:text-sm font-bold mb-2 sm:mb-3 flex items-center gap-2 ${
+          isUser ? 'text-indigo-300' : 'text-gray-300'
+        }`}>
+          <span>{isUser ? 'You' : 'G Assistant'}</span>
+          <span className="text-gray-500 text-[10px] sm:text-xs font-normal">
+            {new Date(message.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+          </span>
         </div>
         
         {/* Display uploaded image (user message) */}
         {isUser && message.uploadedImageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">
+          <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden border-2 border-indigo-500/30 shadow-lg hover:shadow-indigo-500/20 transition-shadow duration-300">
             <img
               src={message.uploadedImageUrl}
               alt="Uploaded image"
@@ -93,7 +105,7 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
         
         {/* Display edited image (assistant message) */}
         {!isUser && message.editedImageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">
+          <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden border-2 border-gray-600/30 shadow-lg hover:shadow-gray-500/20 transition-shadow duration-300">
             <img
               src={message.editedImageUrl}
               alt={message.content || 'Edited image'}
@@ -111,7 +123,7 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
         
         {/* Display generated image if available */}
         {message.imageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden border border-chat-border">
+          <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden border-2 border-gray-600/30 shadow-lg hover:shadow-gray-500/20 transition-shadow duration-300">
             <img
               src={message.imageUrl}
               alt={message.content || 'Generated image'}
@@ -130,12 +142,12 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
         
         {/* Debug: Show if imageUrl exists but image not displayed */}
         {message.isImageGeneration && !message.imageUrl && (
-          <div className="mb-3 p-2 bg-yellow-900/30 border border-yellow-800 rounded text-yellow-400 text-xs">
+          <div className="mb-3 sm:mb-4 p-3 bg-yellow-900/30 border-l-4 border-yellow-500 rounded-lg text-yellow-400 text-xs sm:text-sm shadow-md">
             ⚠️ Image URL tidak tersedia
           </div>
         )}
         
-        <div className="prose prose-invert prose-sm max-w-none">
+        <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
           {parts.map((part, index) => {
             if (part.type === 'code') {
               return (
@@ -146,18 +158,24 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
               <ReactMarkdown
                 key={index}
                 remarkPlugins={[remarkGfm]}
-                className="text-gray-200 leading-relaxed"
+                className={`leading-relaxed sm:leading-loose ${
+                  isUser ? 'text-gray-100' : 'text-gray-200'
+                }`}
                 components={{
-                  p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                  ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
-                  ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>,
-                  li: ({ children }) => <li className="text-gray-300">{children}</li>,
-                  strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                  p: ({ children }) => <p className="mb-3 sm:mb-4 last:mb-0 text-sm sm:text-base">{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc list-inside mb-3 sm:mb-4 space-y-1.5 sm:space-y-2 ml-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside mb-3 sm:mb-4 space-y-1.5 sm:space-y-2 ml-2">{children}</ol>,
+                  li: ({ children }) => <li className={`text-sm sm:text-base ${isUser ? 'text-gray-200' : 'text-gray-300'}`}>{children}</li>,
+                  strong: ({ children }) => <strong className={`font-bold ${isUser ? 'text-white' : 'text-white'}`}>{children}</strong>,
                   em: ({ children }) => <em className="italic">{children}</em>,
                   code: ({ inline, children }: { inline?: boolean; children?: React.ReactNode }) => {
                     if (inline) {
                       return (
-                        <code className="px-1.5 py-0.5 bg-chat-hover text-blue-400 rounded text-sm font-mono">
+                        <code className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs sm:text-sm font-mono ${
+                          isUser 
+                            ? 'bg-indigo-900/50 text-indigo-300 border border-indigo-700/50' 
+                            : 'bg-gray-900/70 text-blue-400 border border-gray-700/50'
+                        }`}>
                           {children}
                         </code>
                       );
@@ -165,15 +183,28 @@ export function MessageBubble({ message, onCopyCode }: MessageBubbleProps) {
                     return <>{children}</>;
                   },
                   a: ({ href, children }) => (
-                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                    <a 
+                      href={href} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={`font-medium transition-colors duration-200 ${
+                        isUser 
+                          ? 'text-indigo-300 hover:text-indigo-200' 
+                          : 'text-blue-400 hover:text-blue-300'
+                      } underline underline-offset-2`}
+                    >
                       {children}
                     </a>
                   ),
-                  h1: ({ children }) => <h1 className="text-2xl font-bold mb-3 mt-4 text-white">{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-xl font-bold mb-2 mt-3 text-white">{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-lg font-bold mb-2 mt-3 text-white">{children}</h3>,
+                  h1: ({ children }) => <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 mt-4 sm:mt-6 ${isUser ? 'text-white' : 'text-white'}`}>{children}</h1>,
+                  h2: ({ children }) => <h2 className={`text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 mt-3 sm:mt-5 ${isUser ? 'text-white' : 'text-white'}`}>{children}</h2>,
+                  h3: ({ children }) => <h3 className={`text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 mt-3 sm:mt-4 ${isUser ? 'text-white' : 'text-white'}`}>{children}</h3>,
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-gray-600 pl-4 italic text-gray-400 my-4">
+                    <blockquote className={`border-l-4 pl-4 sm:pl-6 italic my-3 sm:my-4 py-2 rounded-r-lg ${
+                      isUser 
+                        ? 'border-indigo-500 bg-indigo-900/20 text-indigo-200' 
+                        : 'border-gray-600 bg-gray-800/30 text-gray-400'
+                    }`}>
                       {children}
                     </blockquote>
                   ),
