@@ -654,7 +654,7 @@ export async function removeBackground(imageData: string): Promise<ImageEditResu
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: base64Image, // Hugging Face expects 'inputs' field
+        image: base64Image, // Send as 'image' to worker, worker will convert to 'inputs' for Hugging Face
       }),
     });
     
