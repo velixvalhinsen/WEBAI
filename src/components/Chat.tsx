@@ -430,13 +430,11 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
         </div>
 
         {/* Input */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 md:px-4 py-3 md:py-4">
-          <InputBox 
-            onSend={handleSend} 
-            isLoading={isLoading} 
-            disabled={!apiKey && !proxyUrl} 
-          />
-        </div>
+        <InputBox 
+          onSend={handleSend} 
+          isLoading={isLoading} 
+          disabled={!apiKey && !proxyUrl} 
+        />
       </div>
 
       {/* Login Modal */}
