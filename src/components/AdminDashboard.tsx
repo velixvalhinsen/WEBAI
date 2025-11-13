@@ -13,7 +13,11 @@ interface UserData {
   updatedAt?: any;
 }
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  onNavigateBack?: () => void;
+}
+
+export function AdminDashboard({ onNavigateBack }: AdminDashboardProps = {}) {
   const { currentUser, logout } = useAuth();
   const { success, error: showError } = useToast();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -133,9 +137,22 @@ export function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await logout();
-      window.location.href = '/';
+      // Navigate back to chat view after logout
+      if (onNavigateBack) {
+        onNavigateBack();
+      } else {
+        window.location.href = '/';
+      }
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const handleBackToChat = () => {
+    if (onNavigateBack) {
+      onNavigateBack();
+    } else {
+      window.location.href = '/';
     }
   };
 
@@ -185,7 +202,7 @@ export function AdminDashboard() {
               {currentUser.displayName || currentUser.email}
             </span>
             <button
-              onClick={() => (window.location.href = '/')}
+              onClick={handleBackToChat}
               className="px-4 py-2 text-sm font-medium text-gray-300 bg-chat-hover rounded-lg hover:bg-chat-border transition-colors"
             >
               Kembali ke Chat

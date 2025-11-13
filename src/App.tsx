@@ -126,7 +126,7 @@ function App() {
 
   // Show admin dashboard if admin and viewing admin
   if (currentView === 'admin' && currentUser?.role === 'admin') {
-    return <AdminDashboard />;
+    return <AdminDashboard onNavigateBack={() => setCurrentView('chat')} />;
   }
 
   // Main app - always visible, login via UserMenu
