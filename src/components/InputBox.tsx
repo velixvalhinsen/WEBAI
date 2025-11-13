@@ -92,8 +92,8 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-2 md:px-4 py-2 md:py-4 flex-shrink-0 z-50 fixed bottom-0 left-0 right-0 md:relative md:z-10" style={{ width: '100%', maxWidth: '100%', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-1.5 md:px-4 py-2 md:py-4 flex-shrink-0 z-50 fixed bottom-0 left-0 right-0 md:relative md:z-10" style={{ width: '100%', maxWidth: '100%', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <form onSubmit={handleSubmit} className="w-full mx-auto">
         {/* Preview uploaded image */}
         {uploadedImage && (
           <div className="mb-1.5 md:mb-2 relative inline-block">
@@ -115,7 +115,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
           </div>
         )}
         
-        <div className="flex gap-1.5 md:gap-2">
+        <div className="flex gap-1 md:gap-2">
           {/* File upload button */}
           <input
             ref={fileInputRef}
@@ -128,7 +128,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
           />
           <label
             htmlFor="image-upload"
-            className={`px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation flex items-center justify-center flex-shrink-0 ${
+            className={`px-1.5 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation flex items-center justify-center flex-shrink-0 ${
               isLoading || disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             title="Upload image"
@@ -142,7 +142,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={disabled ? 'Please set your API key first' : uploadedImage ? 'Describe what to do with the image...' : 'Type your message...'}
+            placeholder={disabled ? 'API key...' : uploadedImage ? 'Describe...' : 'Type...'}
             className="flex-1 px-2 md:px-4 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
             style={{ fontSize: '16px' }}
             disabled={isLoading || disabled}
@@ -150,7 +150,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
           <button
             type="submit"
             disabled={isLoading || (!input.trim() && !uploadedImage) || disabled}
-            className="px-3 md:px-6 py-1.5 md:py-2 text-xs md:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation whitespace-nowrap flex-shrink-0"
+            className="px-2 md:px-6 py-1.5 md:py-2 text-xs md:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation whitespace-nowrap flex-shrink-0"
           >
             Send
           </button>
