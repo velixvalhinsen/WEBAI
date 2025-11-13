@@ -324,9 +324,12 @@ export function PWAInstallPrompt() {
               <div className="flex-1">
                 <p className="text-sm font-medium text-white">Install G Chat</p>
                 <p className="text-xs text-gray-400">
-                  {isInAppBrowser && !deferredPrompt 
-                    ? 'Buka di Chrome untuk install aplikasi' 
-                    : 'Install untuk akses lebih cepat dan pengalaman yang lebih baik'}
+                  {(() => {
+                    const prompt = deferredPromptRef.current || deferredPrompt;
+                    return isInAppBrowser && !prompt 
+                      ? 'Buka di Chrome untuk install aplikasi' 
+                      : 'Install untuk akses lebih cepat dan pengalaman yang lebih baik';
+                  })()}
                 </p>
               </div>
             </div>
