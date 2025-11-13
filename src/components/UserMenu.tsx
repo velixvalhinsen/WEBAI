@@ -14,6 +14,7 @@ interface UserMenuProps {
 
 export function UserMenu({ onNavigateToAdmin, onRequestLogin, onLoginRequestHandled }: UserMenuProps = {}) {
   const { currentUser, isEmailVerified, logout } = useAuth();
+  const { success } = useToast();
   const [showMenu, setShowMenu] = useState(false);
   const [authModalView, setAuthModalView] = useState<AuthModalView>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,6 +50,7 @@ export function UserMenu({ onNavigateToAdmin, onRequestLogin, onLoginRequestHand
     try {
       await logout();
       setShowMenu(false);
+      success('Logout berhasil!');
     } catch (err) {
       console.error('Logout error:', err);
     }
