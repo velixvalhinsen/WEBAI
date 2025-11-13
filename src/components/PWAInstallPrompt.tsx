@@ -353,7 +353,7 @@ export function PWAInstallPrompt() {
   const buttonText = getButtonText();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[90] p-4 sm:p-6 md:bottom-4 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:max-w-md md:w-full md:mx-4 animate-slide-up" style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 4rem))' }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 md:bottom-4 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:max-w-md md:w-full md:mx-4 animate-slide-up">
       <div className="bg-gradient-to-br from-chat-darker via-chat-darker to-gray-800 border border-chat-border/50 rounded-2xl shadow-2xl backdrop-blur-sm overflow-hidden relative">
         {/* Decorative gradient overlay */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>

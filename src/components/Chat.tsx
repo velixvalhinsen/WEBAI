@@ -161,11 +161,11 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative w-full max-w-full overflow-hidden" style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw' }}>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 relative">
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-[65] md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -175,7 +175,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
         sidebarOpen 
           ? 'w-64' 
           : 'w-0 md:w-0'
-      } transition-all duration-300 bg-gray-900 dark:bg-gray-800 border-r border-gray-700 flex flex-col overflow-hidden fixed md:relative h-full z-[70] md:z-auto top-0 bottom-0`}>
+      } transition-all duration-300 bg-gray-900 dark:bg-gray-800 border-r border-gray-700 flex flex-col overflow-hidden fixed md:relative h-full z-50 md:z-auto`}>
         <div className="p-3 md:p-4 border-b border-gray-700">
           <button
             onClick={() => {
@@ -310,9 +310,9 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full md:w-auto min-w-0 overflow-hidden relative md:relative">
-        {/* Header - Fixed at top */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2.5 md:py-3 flex items-center justify-between flex-shrink-0 fixed top-0 left-0 right-0 md:static z-[80] md:z-10" style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))' }}>
+      <div className="flex-1 flex flex-col w-full md:w-auto">
+        {/* Header */}
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2.5 md:py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -374,8 +374,8 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
           </div>
         </header>
 
-        {/* Messages - Only this scrolls */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6 space-y-2 sm:space-y-3 md:space-y-4 min-h-0 pt-16 md:pt-0 pb-20 md:pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6 space-y-2 sm:space-y-3 md:space-y-4">
           {!currentChat || currentChat.messages.length === 0 ? (
             <div className="flex items-center justify-center h-full px-4">
               <div className="text-center">
@@ -434,7 +434,6 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
           onSend={handleSend} 
           isLoading={isLoading} 
           disabled={!apiKey && !proxyUrl}
-          sidebarOpen={sidebarOpen}
           onToast={(toastData) => {
             setToast({ type: toastData.type, message: toastData.message });
             setTimeout(() => setToast(null), 4000);
