@@ -267,51 +267,61 @@ export function PWAInstallPrompt() {
     }
 
     // Check deferredPromptRef first (most up-to-date)
-    const prompt = deferredPromptRef.current || deferredPrompt;
+    let prompt = deferredPromptRef.current || deferredPrompt;
     
-    if (prompt) {
-      // Use native install prompt if available
-      try {
-        await prompt.prompt();
-        const { outcome } = await prompt.userChoice;
-        if (outcome === 'accepted') {
-          setShowPrompt(false);
-        }
-        setDeferredPrompt(null);
-        deferredPromptRef.current = null;
-      } catch (error) {
-        console.error('Install prompt error:', error);
-        // Fallback to manual instructions
-        setShowManualInstructions(true);
-      }
-    } else {
-      // Check if Chrome/Edge - wait a bit more for beforeinstallprompt
+    // If no prompt, wait a bit and check again (for Chrome/Edge)
+    if (!prompt) {
       const isChrome = /chrome|chromium|edg/i.test(navigator.userAgent);
       if (isChrome) {
-        // Wait 1 second for beforeinstallprompt event
-        setTimeout(() => {
-          const updatedPrompt = deferredPromptRef.current || deferredPrompt;
-          if (updatedPrompt) {
-            // Retry with updated prompt
-            updatedPrompt.prompt().then(() => {
-              return updatedPrompt.userChoice;
-            }).then(({ outcome }) => {
-              if (outcome === 'accepted') {
-                setShowPrompt(false);
-              }
-              setDeferredPrompt(null);
-              deferredPromptRef.current = null;
-            }).catch((error) => {
-              console.error('Install prompt error:', error);
+        // Wait for beforeinstallprompt event (check multiple times)
+        let attempts = 0;
+        const maxAttempts = 10;
+        const checkInterval = setInterval(() => {
+          attempts++;
+          const foundPrompt = deferredPromptRef.current || deferredPrompt;
+          if (foundPrompt || attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            if (foundPrompt) {
+              // Found prompt, trigger install
+              foundPrompt.prompt().then(() => {
+                return foundPrompt.userChoice;
+              }).then(({ outcome }) => {
+                if (outcome === 'accepted') {
+                  setShowPrompt(false);
+                }
+                setDeferredPrompt(null);
+                deferredPromptRef.current = null;
+              }).catch((error) => {
+                console.error('Install prompt error:', error);
+                setShowManualInstructions(true);
+              });
+            } else {
+              // No prompt found, show manual instructions
               setShowManualInstructions(true);
-            });
-          } else {
-            setShowManualInstructions(true);
+            }
           }
-        }, 1000);
+        }, 100);
+        return;
       } else {
+        // For non-Chrome browsers, show manual instructions
         setShowManualInstructions(true);
+        return;
       }
+    }
+    
+    // Use native install prompt if available
+    try {
+      await prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === 'accepted') {
+        setShowPrompt(false);
+      }
+      setDeferredPrompt(null);
+      deferredPromptRef.current = null;
+    } catch (error) {
+      console.error('Install prompt error:', error);
+      // Fallback to manual instructions
+      setShowManualInstructions(true);
     }
   };
 
@@ -377,7 +387,7 @@ export function PWAInstallPrompt() {
     } else if (prompt) {
       return 'Install Sekarang';
     } else {
-      return 'Lihat Cara Install';
+      return 'Install';
     }
   };
   
