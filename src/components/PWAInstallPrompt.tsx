@@ -85,38 +85,9 @@ export function PWAInstallPrompt() {
     const urlParams = new URLSearchParams(window.location.search);
     const fromInApp = urlParams.get('fromInApp') === 'true';
     
-    // If redirected from in-app browser, wait for beforeinstallprompt and auto-trigger
-    if (fromInApp) {
-      const checkPrompt = setInterval(() => {
-        if (deferredPromptRef.current) {
-          clearInterval(checkPrompt);
-          // Auto-trigger install prompt after redirect
-          setTimeout(async () => {
-            try {
-              if (deferredPromptRef.current) {
-                await deferredPromptRef.current.prompt();
-                const { outcome } = await deferredPromptRef.current.userChoice;
-                if (outcome === 'accepted') {
-                  setShowPrompt(false);
-                }
-                setDeferredPrompt(null);
-                deferredPromptRef.current = null;
-              }
-            } catch (error) {
-              console.error('Auto-install prompt error:', error);
-            }
-          }, 500);
-        }
-      }, 100);
-
-      // Stop checking after 5 seconds
-      setTimeout(() => {
-        clearInterval(checkPrompt);
-      }, 5000);
-    }
-
-    // Show prompt immediately if in-app browser, otherwise wait 2 seconds
-    const delay = inApp ? 500 : 2000;
+    // Show prompt after a short delay if redirected from in-app browser (to allow beforeinstallprompt to fire)
+    // Otherwise show immediately if in-app browser, or wait 2 seconds for normal browsers
+    const delay = fromInApp ? 500 : (inApp ? 500 : 2000);
     const timer = setTimeout(() => {
       const dismissed = localStorage.getItem('pwa-install-dismissed');
       if (!dismissed) {
