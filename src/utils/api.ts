@@ -367,15 +367,41 @@ export function isImageGenerationRequest(message: string): boolean {
     return true;
   }
   
-  // Phrase-based triggers (must start with phrase)
+  // Phrase-based triggers - more flexible matching
+  // Check for keywords that indicate image generation request
+  const imageKeywords = ['gambar', 'image', 'foto', 'photo', 'picture'];
+  const actionKeywords = ['buat', 'buatkan', 'generate', 'create', 'bikin', 'buatkan saya', 'buat saya'];
+  
+  // Check if message contains both action and image keywords
+  const hasImageKeyword = imageKeywords.some(keyword => normalized.includes(keyword));
+  const hasActionKeyword = actionKeywords.some(keyword => normalized.includes(keyword));
+  
+  // If has both, it's likely an image generation request
+  if (hasImageKeyword && hasActionKeyword) {
+    return true;
+  }
+  
+  // Also check for phrases that start with action + image
   const phrases = [
     'buat gambar',
     'generate image',
     'create image',
     'buatkan gambar',
+    'buat gambar',
+    'bikin gambar',
     'gambar',
   ];
   if (phrases.some(phrase => normalized.startsWith(phrase))) {
+    return true;
+  }
+  
+  // Check for "buatkan saya gambar" pattern
+  if (normalized.includes('buatkan') && normalized.includes('gambar')) {
+    return true;
+  }
+  
+  // Check for "buat saya gambar" pattern
+  if (normalized.includes('buat saya') && normalized.includes('gambar')) {
     return true;
   }
   
@@ -385,19 +411,74 @@ export function isImageGenerationRequest(message: string): boolean {
 // Extract prompt from image generation request
 export function extractImagePrompt(message: string): string {
   const normalized = message.trim();
-  
-  // Remove command prefixes
-  const prefixes = ['/image', '/generate', '/gambar', 'buat gambar', 'generate image', 'create image'];
   let prompt = normalized;
   
-  for (const prefix of prefixes) {
+  // Remove command prefixes
+  const commandPrefixes = ['/image', '/generate', '/gambar', '/img'];
+  for (const prefix of commandPrefixes) {
     if (normalized.toLowerCase().startsWith(prefix.toLowerCase())) {
       prompt = normalized.slice(prefix.length).trim();
       break;
     }
   }
   
-  // If prompt is empty, use the original message
+  // Remove action + image phrases (more flexible)
+  const phrases = [
+    'buatkan saya gambar',
+    'buat saya gambar',
+    'buatkan gambar',
+    'buat gambar',
+    'bikin gambar',
+    'generate image',
+    'create image',
+    'buatkan',
+    'buat',
+  ];
+  
+  for (const phrase of phrases) {
+    const lowerPhrase = phrase.toLowerCase();
+    const lowerMessage = prompt.toLowerCase();
+    
+    // Check if message starts with phrase
+    if (lowerMessage.startsWith(lowerPhrase)) {
+      prompt = prompt.slice(phrase.length).trim();
+      // Remove common words after phrase
+      prompt = prompt.replace(/^(saya|me|my|the|a|an)\s+/i, '');
+      break;
+    }
+    
+    // Check if phrase appears in message (for flexible matching)
+    if (lowerMessage.includes(lowerPhrase) && lowerMessage.includes('gambar')) {
+      // Extract text after the phrase
+      const index = lowerMessage.indexOf(lowerPhrase);
+      prompt = prompt.slice(index + phrase.length).trim();
+      // Remove common words
+      prompt = prompt.replace(/^(saya|me|my|the|a|an)\s+/i, '');
+      // If we found "gambar" before the phrase, extract after "gambar"
+      const gambarIndex = lowerMessage.indexOf('gambar');
+      if (gambarIndex >= 0) {
+        const afterGambar = prompt.slice(Math.max(0, gambarIndex - index - phrase.length + 'gambar'.length)).trim();
+        if (afterGambar) {
+          prompt = afterGambar.replace(/^(saya|me|my|the|a|an)\s+/i, '');
+        }
+      }
+      break;
+    }
+  }
+  
+  // Clean up common prefixes
+  prompt = prompt.replace(/^(saya|me|my|the|a|an|yang|apa|siapa)\s+/i, '');
+  
+  // If prompt is empty or too short, use the original message
+  if (!prompt || prompt.length < 3) {
+    // Try to extract meaningful content from original message
+    const words = normalized.split(/\s+/);
+    // Skip common words at the start
+    const skipWords = ['buatkan', 'buat', 'saya', 'gambar', 'image', 'generate', 'create', 'bikin'];
+    const meaningfulWords = words.filter(word => !skipWords.includes(word.toLowerCase()));
+    prompt = meaningfulWords.join(' ') || normalized;
+  }
+  
   return prompt || normalized;
 }
 
