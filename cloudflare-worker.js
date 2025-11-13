@@ -47,14 +47,20 @@ export default {
       // Handle image generation endpoint - check path first before parsing body
       // Normalize path (remove trailing slash, handle different formats)
       const normalizedPath = path.replace(/\/$/, '');
-      const isImageEndpoint = normalizedPath === '/image' || normalizedPath.endsWith('/image');
+      // Check for image endpoint - must be exact match or ends with /image
+      const isImageEndpoint = normalizedPath === '/image' || 
+                              normalizedPath.endsWith('/image') ||
+                              normalizedPath === 'image';
       console.log(`[Worker] Normalized path: ${normalizedPath}, Is image endpoint: ${isImageEndpoint}`);
       
       if (isImageEndpoint) {
         console.log('[Worker] Handling image generation request');
+        
+        // Clone request to avoid consuming body if we need to read it
+        const clonedRequest = request.clone();
         let body;
         try {
-          body = await request.json();
+          body = await clonedRequest.json();
           console.log('[Worker] Image request body:', JSON.stringify(body).substring(0, 100));
         } catch (jsonError) {
           console.error('[Worker] Error parsing JSON:', jsonError);
@@ -70,9 +76,13 @@ export default {
         const { prompt } = body;
         
         if (!prompt) {
-          console.error('[Worker] Prompt missing in request body');
+          console.error('[Worker] Prompt missing in request body. Body keys:', Object.keys(body || {}));
           return new Response(
-            JSON.stringify({ error: 'Prompt is required' }),
+            JSON.stringify({ 
+              error: 'Prompt is required',
+              received_keys: Object.keys(body || {}),
+              body_sample: JSON.stringify(body).substring(0, 200)
+            }),
             {
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
