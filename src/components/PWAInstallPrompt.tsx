@@ -161,10 +161,11 @@ export function PWAInstallPrompt() {
       let timer: NodeJS.Timeout | null = null;
       
       // In Chrome, wait for beforeinstallprompt before showing prompt UI
+      let chromeCheckInterval: NodeJS.Timeout | null = null;
       if (isChrome) {
-        const chromeCheckInterval = setInterval(() => {
+        chromeCheckInterval = setInterval(() => {
           if (deferredPromptRef.current) {
-            clearInterval(chromeCheckInterval);
+            if (chromeCheckInterval) clearInterval(chromeCheckInterval);
             // beforeinstallprompt has fired, now show prompt UI
             setTimeout(() => {
               const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
@@ -181,7 +182,7 @@ export function PWAInstallPrompt() {
         
         // Stop checking after 2 seconds, show prompt anyway
         timer = setTimeout(() => {
-          clearInterval(chromeCheckInterval);
+          if (chromeCheckInterval) clearInterval(chromeCheckInterval);
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
           const isIOSStandalone = (window.navigator as any).standalone === true;
           const isInstalledCheck = isIOSStandalone || isStandalone;
@@ -228,6 +229,7 @@ export function PWAInstallPrompt() {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         window.removeEventListener('appinstalled', handleAppInstalled);
         if (timer) clearTimeout(timer);
+        if (chromeCheckInterval) clearInterval(chromeCheckInterval);
       };
     }
 
