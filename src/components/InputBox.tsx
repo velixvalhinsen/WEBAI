@@ -5,10 +5,11 @@ interface InputBoxProps {
   onSend: (message: string, imageData?: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  sidebarOpen?: boolean;
   onToast?: (toast: { type: 'success' | 'error' | 'warning' | 'info'; message: string }) => void;
 }
 
-export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps) {
+export function InputBox({ onSend, isLoading, disabled, sidebarOpen = false, onToast }: InputBoxProps) {
   const [input, setInput] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +93,7 @@ export function InputBox({ onSend, isLoading, disabled, onToast }: InputBoxProps
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-1.5 md:px-4 py-2 md:py-4 flex-shrink-0 z-50 fixed bottom-0 left-0 right-0 md:relative md:z-10" style={{ width: '100%', maxWidth: '100%', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+    <div className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-1.5 md:px-4 py-2 md:py-4 flex-shrink-0 fixed bottom-0 left-0 right-0 md:relative md:z-10 ${sidebarOpen ? 'hidden md:flex z-40' : 'flex z-50'}`} style={{ width: '100%', maxWidth: '100%', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
       <form onSubmit={handleSubmit} className="w-full mx-auto">
         {/* Preview uploaded image */}
         {uploadedImage && (

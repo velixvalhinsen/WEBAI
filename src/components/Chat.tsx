@@ -165,7 +165,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[60] md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -175,7 +175,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
         sidebarOpen 
           ? 'w-64' 
           : 'w-0 md:w-0'
-      } transition-all duration-300 bg-gray-900 dark:bg-gray-800 border-r border-gray-700 flex flex-col overflow-hidden fixed md:relative h-full z-50 md:z-auto`}>
+      } transition-all duration-300 bg-gray-900 dark:bg-gray-800 border-r border-gray-700 flex flex-col overflow-hidden fixed md:relative h-full z-[70] md:z-auto`}>
         <div className="p-3 md:p-4 border-b border-gray-700">
           <button
             onClick={() => {
@@ -434,6 +434,7 @@ export function Chat({ user, onLogout, onLogin }: ChatProps) {
           onSend={handleSend} 
           isLoading={isLoading} 
           disabled={!apiKey && !proxyUrl}
+          sidebarOpen={sidebarOpen}
           onToast={(toastData) => {
             setToast({ type: toastData.type, message: toastData.message });
             setTimeout(() => setToast(null), 4000);
